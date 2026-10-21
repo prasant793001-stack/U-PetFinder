@@ -1,0 +1,24 @@
+# GitHub Pages configuration
+baseurl: /U-PetFinder/
+permalink: /:title.html
+
+# Site settings
+title: U-PetFinder | UAE Lost & Found Pets
+description: Reconnecting lost pets with their families across the UAE
+logo: /favicon.svg
+
+# Build settings
+remote_theme: pages-themes/hacker@main
+plugins:
+  - jekyll-remote-theme
+
+# Exclude files
+exclude:
+  - node_modules/
+  - package.json
+  - package-lock.json
+  - .git/
+  - .github/
+  - src/
+  - public/
+  - dist/
