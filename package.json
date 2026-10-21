@@ -1,0 +1,36 @@
+{
+  "name": "upetfinder",
+  "version": "1.0.0",
+  "description": "UAE Lost & Found Pet Platform - U-PetFinder",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "npm run build && firebase deploy"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "three": "^0.170.0",
+    "@react-three/fiber": "^8.16.0",
+    "@react-three/drei": "^9.111.0",
+    "piexifjs": "^1.0.4",
+    "firebase": "^10.14.0",
+    "leaflet": "^1.9.4",
+    "leaflet-defaulticon-compatibility": "^0.1.2"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/leaflet": "^1.9.12",
+    "@vitejs/plugin-react": "^4.3.3",
+    "vite": "^6.0.3",
+    "vite-plugin-pwa": "^0.17.2"
+  },
+  "allowScripts": {
+    "protobufjs@7.6.6": true,
+    "esbuild@0.25.12": true
+  }
+}
