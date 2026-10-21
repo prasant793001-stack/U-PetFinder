@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Landing.css';
 
 function Landing() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
 
   return (
@@ -18,10 +20,10 @@ function Landing() {
             U-PetFinder brings you a secure, privacy-first platform to find your beloved companions
           </p>
           <div className="hero-cta">
-            <button className="btn btn-primary" onClick={() => window.location.href = '/add'}>
+            <button className="btn btn-primary" onClick={() => navigate('/add')}>
               Report Lost/Found Pet
             </button>
-            <button className="btn btn-secondary" onClick={() => window.location.href = '/board'}>
+            <button className="btn btn-secondary" onClick={() => navigate('/board')}>
               Browse Listings
             </button>
           </div>

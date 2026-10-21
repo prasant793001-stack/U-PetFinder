@@ -1,195 +1,150 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import Landing from './pages/Landing';
 import LostFoundBoard from './pages/LostFoundBoard';
 import AddListing from './pages/AddListing';
+import { isFirebaseReady } from './firebase';
 import './App.css';
+import './AppShell.css';
+
+const COCO_LINES = {
+  '/': "Hi, I'm COCO! I help reunite lost pets with their families across the UAE.",
+  '/board': 'Filter by emirate, animal, breed and colour. Chats stay private - no phone numbers shown!',
+  '/add': "Tap here to post a pet - I'll strip the photo's location data to protect your home privacy!"
+};
+
+function Logo() {
+  return (
+    <svg width="44" height="44" viewBox="0 0 64 64" aria-hidden="true">
+      <defs>
+        <linearGradient id="pin" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#FFB347" />
+          <stop offset="1" stopColor="#FF9F1C" />
+        </linearGradient>
+      </defs>
+      {/* map pin with cat ears */}
+      <path d="M32 60 C32 60 10 38 10 24 C10 18 12 13 15 10 L14 2 L23 7 C26 6 29 5.5 32 5.5 C35 5.5 38 6 41 7 L50 2 L49 10 C52 13 54 18 54 24 C54 38 32 60 32 60 Z" fill="url(#pin)" />
+      <circle cx="32" cy="25" r="11" fill="#FFF8EC" />
+      <circle cx="28" cy="23" r="1.8" fill="#2D3748" />
+      <circle cx="36" cy="23" r="1.8" fill="#2D3748" />
+      <path d="M30.5 27.5 L32 29 L33.5 27.5" fill="none" stroke="#2D3748" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M21 26 L13 24 M21 29 L13 30 M43 26 L51 24 M43 29 L51 30" stroke="#2D3748" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function Coco({ message, jumping, look }) {
+  const [talking, setTalking] = useState(true);
+  useEffect(() => {
+    setTalking(true);
+    const t = setTimeout(() => setTalking(false), 8000);
+    return () => clearTimeout(t);
+  }, [message]);
+  return (
+    <div className={`coco ${jumping ? 'coco-jump' : ''}`}>
+      {talking && <div className="coco-say" role="status">{message}</div>}
+      <button className="coco-hit" aria-label="Ask COCO" onClick={() => setTalking(t => !t)} />
+      <svg className="coco-cat" viewBox="0 0 120 120" aria-label="COCO the cat guide">
+        <path className="coco-tailpath" d="M88 96 C108 92 112 70 100 62" fill="none" stroke="#E58E18" strokeWidth="8" strokeLinecap="round" />
+        <ellipse className="coco-breathe" cx="60" cy="92" rx="30" ry="22" fill="#FF9F1C" />
+        <g style={{ transform: `rotate(${look.x * 8}deg)`, transformOrigin: '60px 60px', transition: 'transform .25s ease-out' }}>
+          <path d="M30 40 L28 12 L50 30 Z M90 40 L92 12 L70 30 Z" fill="#FF9F1C" />
+          <path d="M33 34 L32 19 L44 29 Z M87 34 L88 19 L76 29 Z" fill="#FFD6A0" />
+          <circle cx="60" cy="52" r="32" fill="#FF9F1C" />
+          <ellipse cx="48" cy="50" rx="7" ry="8" fill="#fff" />
+          <ellipse cx="72" cy="50" rx="7" ry="8" fill="#fff" />
+          <circle cx={48 + look.x * 3} cy={51 - look.y * 3} r="4" fill="#2D3748" />
+          <circle cx={72 + look.x * 3} cy={51 - look.y * 3} r="4" fill="#2D3748" />
+          <path d="M57 60 L60 63 L63 60 Z" fill="#C2410C" />
+          <path d="M60 63 Q55 68 51 65 M60 63 Q65 68 69 65" fill="none" stroke="#2D3748" strokeWidth="1.6" strokeLinecap="round" />
+          <path d="M40 60 L24 57 M40 64 L24 66 M80 60 L96 57 M80 64 L96 66" stroke="#2D3748" strokeWidth="1.4" strokeLinecap="round" />
+        </g>
+      </svg>
+    </div>
+  );
+}
 
 function App() {
-  const [cocoState, setCocoState] = useState({
-    position: { x: 0, y: 0 },
-    animation: 'idle',
-    message: 'Hi! I\'m COCO! Your friendly pet finder guide!'
-  });
+  const location = useLocation();
   const [showCoco, setShowCoco] = useState(true);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [currentPage, setCurrentPage] = useState('landing');
+  const [look, setLook] = useState({ x: 0, y: 0 });
+  const [jumping, setJumping] = useState(false);
+  const first = useRef(true);
+  const message = COCO_LINES[location.pathname] || COCO_LINES['/'];
 
-  // Track mouse movement for COCO
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      const x = (e.clientX / window.innerWidth) * 2 - 1;
-      const y = -(e.clientY / window.innerHeight) * 2 + 1;
-      setMousePos({ x, y });
+    let raf = 0;
+    const onMove = (e) => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => setLook({
+        x: (e.clientX / window.innerWidth) * 2 - 1,
+        y: -(e.clientY / window.innerHeight) * 2 + 1
+      }));
     };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', onMove);
+    return () => { window.removeEventListener('mousemove', onMove); cancelAnimationFrame(raf); };
   }, []);
 
-  // COCO animations based on page changes
   useEffect(() => {
-    const previousPage = currentPage;
-    const nextPage = currentPage;
+    if (first.current) { first.current = false; return; }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setJumping(true);
+    const t = setTimeout(() => setJumping(false), 900);
+    return () => clearTimeout(t);
+  }, [location.pathname]);
 
-    if (previousPage !== nextPage) {
-      setCocoState(prev => ({
-        ...prev,
-        animation: 'jump',
-        message: 'Let\'s explore together!'
-      }));
-
-      setTimeout(() => {
-        setCocoState(prev => ({
-          ...prev,
-          animation: 'idle'
-        }));
-      }, 1000);
-    }
-  }, [currentPage]);
+  const link = ({ isActive }) => `shell-link ${isActive ? 'is-active' : ''}`;
 
   return (
     <div className="app">
-      {/* Background video - ambient room interior */}
-      <div className="background-video">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="ambient-bg"
-        >
-          <source src="/assets/ambient-room.mp4" type="video/mp4" />
-        </video>
-        <div className="overlay-glass" />
+      <div className="ambient" aria-hidden="true">
+        <span className="blob b1" /><span className="blob b2" /><span className="blob b3" />
       </div>
 
-      {/* Navigation */}
-      <nav className="glass-nav">
-        <div className="nav-brand">
-          <svg width="40" height="40" viewBox="0 0 100 100" className="logo-svg">
-            {/* Map pin base */}
-            <path
-              d="M50 5 L65 25 L85 25 L68 42 L72 65 L50 78 L28 65 L32 42 L15 25 L35 25 Z"
-              fill="url(#pinGradient)"
-              stroke="#FF9F1C"
-              strokeWidth="2"
-            />
-            {/* Cat ears */}
-            <path d="M45 25 L38 15 L52 22 Z" fill="#FF9F1C" />
-            <path d="M55 25 L62 15 L48 22 Z" fill="#FF9F1C" />
-            {/* Whiskers */}
-            <line x1="35" y1="35" x2="25" y2="38" stroke="#2D3748" strokeWidth="2" />
-            <line x1="38" y1="40" x2="28" y2="42" stroke="#2D3748" strokeWidth="2" />
-            <line x1="62" y1="35" x2="72" y2="38" stroke="#2D3748" strokeWidth="2" />
-            <line x1="59" y1="40" x2="69" y2="42" stroke="#2D3748" strokeWidth="2" />
-            {/* Face */}
-            <circle cx="50" cy="55" r="8" fill="#2D3748" />
-            <circle cx="46" cy="55" r="2" fill="white" />
-            <circle cx="54" cy="55" r="2" fill="white" />
-            <path d="M48 62 Q50 64 52 62" fill="none" stroke="#2D3748" strokeWidth="2" />
-          </svg>
-          <span className="brand-text">U-PetFinder</span>
+      <nav className="shell-nav">
+        <NavLink to="/" className="shell-brand" end>
+          <Logo />
+          <span>
+            <strong>U-PetFinder</strong>
+            <small>FORM. DESIGN. AI</small>
+          </span>
+        </NavLink>
+        <div className="shell-links">
+          <NavLink to="/" end className={link}>Home</NavLink>
+          <NavLink to="/board" className={link}>Lost &amp; Found</NavLink>
+          <NavLink to="/add" className={link}>Add Pet</NavLink>
         </div>
-        <div className="nav-links">
-          <button 
-            className={`nav-link ${currentPage === 'landing' ? 'active' : ''}`}
-            onClick={() => setCurrentPage('landing')}
-          >
-            Home
-          </button>
-          <button 
-            className={`nav-link ${currentPage === 'board' ? 'active' : ''}`}
-            onClick={() => setCurrentPage('board')}
-          >
-            Lost & Found
-          </button>
-          <button 
-            className={`nav-link ${currentPage === 'add' ? 'active' : ''}`}
-            onClick={() => setCurrentPage('add')}
-          >
-            Add Pet
-          </button>
-        </div>
-        <button 
-          className="coco-toggle"
-          onClick={() => setShowCoco(!showCoco)}
-        >
+        <button className="shell-coco-toggle" onClick={() => setShowCoco(s => !s)}>
           {showCoco ? 'Hide COCO' : 'Show COCO'}
         </button>
       </nav>
 
-      {/* Main content */}
-      <main className="main-content">
+      {!isFirebaseReady && (
+        <div className="demo-banner">Preview mode - showing sample listings. Connect Firebase to go live.</div>
+      )}
+
+      <main className="shell-main">
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/board" element={<LostFoundBoard />} />
           <Route path="/add" element={<AddListing />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
 
-      {/* COCO 3D Agent */}
-      {showCoco && (
-        <div 
-          className="coco-container"
-          style={{
-            transform: `translate(${mousePos.x * -40}px, ${mousePos.y * -40}px)`,
-            animation: cocoState.animation
-          }}
-        >
-          <div className="coco-bubble">
-            <div className="bubble-content">
-              <p>{cocoState.message}</p>
-            </div>
-          </div>
-          <div className="coco-avatar">
-            {/* COCO - Stylized 3D Cat */}
-            <div className="coco-3d-model">
-              <div className="coco-head">
-                <div className="coco-ears">
-                  <div className="ear left" />
-                  <div className="ear right" />
-                </div>
-                <div className="coco-face">
-                  <div className="coco-eyes">
-                    <div className="eye left">
-                      <div className="pupil left" style={{ transform: `translateX(${mousePos.x * 8}px)` }} />
-                    </div>
-                    <div className="eye right">
-                      <div className="pupil right" style={{ transform: `translateX(${mousePos.x * 8}px)` }} />
-                    </div>
-                  </div>
-                  <div className="coco-nose" />
-                  <div className="coco-mouth" />
-                  <div className="coco-whiskers">
-                    <div className="whisker left-1" />
-                    <div className="whisker left-2" />
-                    <div className="whisker right-1" />
-                    <div className="whisker right-2" />
-                  </div>
-                </div>
-                <div className="coco-body" />
-                <div className="coco-tail" style={{ animation: cocoState.animation === 'idle' ? 'tail-swish 3s ease-in-out infinite' : '' }} />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {showCoco && <Coco message={message} jumping={jumping} look={look} />}
 
-      {/* Footer */}
-      <footer className="glass-footer">
-        <div className="footer-content">
-          <div className="footer-brand">
-            <h4>U-PetFinder</h4>
-            <p>Reconnecting lost pets with their families across the UAE</p>
-          </div>
-          <div className="footer-contact">
-            <a href="mailto:prasant.aakriti@gmail.com">prasant.aakriti@gmail.com</a>
-          </div>
-          <div className="footer-compliance">
-            <p>Compliant with UAE Federal Decree-Law No. 45 of 2021</p>
-            <p>Data Center: UAE (me-central1)</p>
-          </div>
+      <footer className="shell-footer">
+        <div>
+          <strong>U-PetFinder</strong>
+          <p>Reconnecting lost pets with their families across the UAE. An AAKRITI network project.</p>
+        </div>
+        <div>
+          <a href="mailto:prasant.aakriti@gmail.com">prasant.aakriti@gmail.com</a>
+        </div>
+        <div className="shell-legal">
+          <p>Aligned with UAE Federal Decree-Law No. 45 of 2021 (PDPL)</p>
+          <p>Data region: UAE (me-central1)</p>
         </div>
       </footer>
     </div>

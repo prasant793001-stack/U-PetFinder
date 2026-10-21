@@ -1,74 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="U-PetFinder - Reconnecting Lost Pets with Their Families across the UAE">
-  <title>U-PetFinder | UAE Lost & Found Pets</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', sans-serif; background: #F5F0E6; color: #2D3748; line-height: 1.6; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-    header { text-align: center; padding: 60px 20px; background: linear-gradient(135deg, #FF9F1C 0%, #FFB347 100%); color: white; border-radius: 0 0 30px 30px; margin-bottom: 40px; }
-    h1 { font-size: 3em; font-weight: 800; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
-    .subtitle { font-size: 1.3em; opacity: 0.95; max-width: 700px; margin: 0 auto; }
-    .hero { text-align: center; padding: 40px 20px; }
-    .coco-agent { font-size: 1.2em; color: #555; margin: 30px 0; padding: 20px; background: rgba(255,255,255,0.6); border-radius: 20px; display: inline-block; }
-    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px; margin: 40px 0; }
-    .feature-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); transition: transform 0.3s; }
-    .feature-card:hover { transform: translateY(-5px); }
-    .feature-card h3 { color: #FF9F1C; margin-bottom: 15px; font-size: 1.4em; }
-    .feature-card p { color: #555; }
-    .company { background: white; padding: 40px; border-radius: 20px; margin: 40px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-    .company h2 { color: #2D3748; margin-bottom: 20px; }
-    footer { text-align: center; padding: 40px 20px; background: #2D3748; color: white; margin-top: 40px; }
-    footer a { color: #FF9F1C; }
-    .cta { display: inline-block; background: #FF9F1C; color: white; padding: 15px 30px; border-radius: 30px; text-decoration: none; font-weight: 600; margin-top: 20px; transition: background 0.3s; }
-    .cta:hover { background: #FFB347; }
-  </style>
-</head>
-<body>
-  <header>
-    <h1>🐾 U-PetFinder</h1>
-    <p class="subtitle">Reconnecting Lost Pets with Their Families across the UAE</p>
-  </header>
-  
-  <div class="container">
-    <section class="hero">
-      <div class="coco-agent">
-        <strong>🐱 COCO:</strong> "Hello! I'm COCO, your friendly guide. I'm here to help you find lost pets or reunite with your furry family members. Browse our lost & found board below!"
-      </div>
-    </section>
-    
-    <section class="features">
-      <div class="feature-card">
-        <h3>🔍 Lost & Found Board</h3>
-        <p>Browse lost and found pets with advanced filtering by emirate, type, breed, and more. Privacy-protected image uploads.</p>
-      </div>
-      <div class="feature-card">
-        <h3>🛡️ Privacy First</h3>
-        <p>All images are automatically stripped of EXIF data for privacy. Your pet's photos stay safe and secure.</p>
-      </div>
-      <div class="feature-card">
-        <h3>🐶 Add a Pet</h3>
-        <p>Submit a lost or found pet listing in just a few steps. We'll help you get in touch with the right family.</p>
-      </div>
-    </section>
-    
-    <section class="company">
-      <h2>About U-PetFinder</h2>
-      <p><strong>AAKRITI Network</strong> is a UAE-based technology company focused on pet welfare and community building. Our mission is to use technology to solve real problems - in this case, helping lost pets find their way home.</p>
-      <p>We're committed to privacy, transparency, and building a safer online space for pet owners across the UAE.</p>
-      <a href="mailto:contact@upetfinder.ae" class="cta">Contact Us</a>
-    </section>
-  </div>
-  
-  <footer>
-    <p>&copy; 2025 U-PetFinder. Built with ❤️ for UAE pet owners.</p>
-    <p>Compliant with UAE Federal Decree-Law No. 45 of 2021 on Personal Data Protection</p>
-  </footer>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="U-PetFinder - Reconnecting Lost Pets with Their Families across the UAE" />
+    <meta name="theme-color" content="#FF9F1C" />
+    <title>U-PetFinder | UAE Lost & Found Pets</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>

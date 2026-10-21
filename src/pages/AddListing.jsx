@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc } from 'firebase/firestore';
-import { storage, db } from '../firebase';
+import { storage, db, isFirebaseReady } from '../firebase';
+import { useNavigate } from 'react-router-dom';
 import piexifjs from 'piexifjs';
 import './AddListing.css';
 
@@ -71,7 +72,10 @@ function AddListing() {
     setStep(2);
   };
 
+  const navigate = useNavigate();
+
   const handleUploadPhoto = async (petIndex) => {
+    if (!isFirebaseReady) { alert('Demo mode: connect Firebase (.env.local) to upload photos.'); return; }
     const pet = pets[petIndex];
     if (!pet.photo) return;
 
@@ -124,6 +128,11 @@ function AddListing() {
   };
 
   const handleSubmit = async () => {
+    if (!isFirebaseReady) {
+      alert('Demo mode: your listing was checked but not saved. Connect Firebase (.env.local) to publish listings.');
+      navigate('/board');
+      return;
+    }
     // Save all pets to Firestore
     for (const pet of pets) {
       await addDoc(collection(db, 'pets'), {
@@ -134,7 +143,7 @@ function AddListing() {
     }
 
     alert('All listings submitted successfully!');
-    window.location.href = '/board';
+    navigate('/board');
   };
 
   return (

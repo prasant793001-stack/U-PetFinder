@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
+
+const DEMO_PETS = [
+  { id: 'd1', status: 'lost', type: 'Cat', breed: 'Persian', colors: 'White', emirate: 'Dubai', location: 'JLT Cluster D', reward: '1000', description: 'Shy, blue collar, answers to Snowy.', date: '2026-10-18' },
+  { id: 'd2', status: 'lost', type: 'Dog', breed: 'Golden Retriever', colors: 'Golden', emirate: 'Abu Dhabi', location: 'Khalifa City A', reward: '2500', description: 'Friendly, microchipped.', date: '2026-10-19' },
+  { id: 'd3', status: 'found', type: 'Cat', breed: 'Domestic Shorthair', colors: 'Orange', emirate: 'Sharjah', location: 'Al Majaz 2', description: 'Found near the waterfront park, very calm.', date: '2026-10-20' },
+  { id: 'd4', status: 'found', type: 'Other', breed: 'Rabbit', colors: 'Grey', emirate: 'Ajman', location: 'Al Nuaimiya', description: 'Found in building parking.', date: '2026-10-21' }
+];
 import './LostFoundBoard.css';
 
 const emirates = [
@@ -31,6 +38,7 @@ function LostFoundBoard() {
   // Fetch pets from Firestore
   useEffect(() => {
     const fetchPets = async () => {
+      if (!db) { setPets(DEMO_PETS); setLoading(false); return; }
       try {
         const q = query(
           collection(db, 'pets'),
@@ -45,6 +53,7 @@ function LostFoundBoard() {
         setPets(petsData);
       } catch (error) {
         console.error('Error fetching pets:', error);
+        setPets(DEMO_PETS);
       } finally {
         setLoading(false);
       }
@@ -55,10 +64,11 @@ function LostFoundBoard() {
 
   // Filter pets based on criteria
   const filteredPets = pets.filter(pet => {
+    if ((pet.status || 'lost') !== status) return false;
     if (emirate !== 'All' && pet.emirate !== emirate) return false;
     if (animalType !== 'All' && pet.type !== animalType) return false;
     if (breed !== 'All' && pet.breed !== breed) return false;
-    if (colors !== 'All' && !pet.colors.includes(colors)) return false;
+    if (colors !== 'All' && !(pet.colors || '').includes(colors)) return false;
     return true;
   });
 
@@ -208,10 +218,10 @@ function LostFoundBoard() {
             >
               <div className="pet-image">
                 <img 
-                  src={pet.photoURL || '/placeholder-pet.jpg'} 
+                  src={pet.photoURL || "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23FFF1D6'/%3E%3Ctext x='200' y='170' font-size='90' text-anchor='middle'%3E%F0%9F%90%BE%3C/text%3E%3C/svg%3E"} 
                   alt={pet.breed}
                   onError={(e) => {
-                    e.target.src = '/placeholder-pet.jpg';
+                    e.target.src = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23FFF1D6'/%3E%3Ctext x='200' y='170' font-size='90' text-anchor='middle'%3E%F0%9F%90%BE%3C/text%3E%3C/svg%3E";
                   }}
                 />
                 <div className="pet-badge">
