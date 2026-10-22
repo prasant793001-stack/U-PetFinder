@@ -13,6 +13,7 @@ const CatStage = lazy(() => import('./three/CatStage'));
 // Board + Add pages (and the Firebase SDK they need) load only when visited
 const Board = lazy(() => import('./pages/Board'));
 const ReportPet = lazy(() => import('./pages/ReportPet'));
+const CocoStudio = lazy(() => import('./pages/CocoStudio'));
 const canWebGL = (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; } })();
 const reducedMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
@@ -158,13 +159,14 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/board" element={<Board />} />
           <Route path="/report" element={<ReportPet />} />
+          <Route path="/coco" element={<CocoStudio />} />
           <Route path="/add" element={<Navigate to="/report" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </Suspense>
       </main>
 
-      {showCoco && (canWebGL && !reducedMotion
+      {showCoco && location.pathname !== '/coco' && (canWebGL && !reducedMotion
         ? <Safe fallback={<Coco message={message} jumping={jumping} look={look} />}><Suspense fallback={null}><CatStage /></Suspense></Safe>
         : <Coco message={message} jumping={jumping} look={look} />)}
 

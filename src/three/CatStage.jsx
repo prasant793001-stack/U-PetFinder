@@ -3,7 +3,7 @@ import { Canvas } from '@react-three/fiber';
 import { Environment, Lightformer } from '@react-three/drei';
 import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import CocoCat from './CocoCat';
+import CocoCat from './CocoModel';
 import './catStage.css';
 
 const LINES = {

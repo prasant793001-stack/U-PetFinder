@@ -135,3 +135,4 @@
 .chat-form { display: flex; gap: .5rem; padding: .7rem; border-top: 1px solid var(--line); }
 
 @media (max-width: 860px) { .filters { grid-template-columns: 1fr 1fr; } .choice-grid, .grid2 { grid-template-columns: 1fr; } }
+.studio-stage { height: min(70vh, 620px); border-radius: 28px; overflow: hidden; box-shadow: 0 30px 70px rgba(80, 40, 0, .3); margin-bottom: 1rem; }
