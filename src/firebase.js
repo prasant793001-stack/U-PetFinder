@@ -14,7 +14,8 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-export const isFirebaseReady = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
+import { isFirebaseReady } from './firebaseFlag';
+export { isFirebaseReady };
 
 let app = null, auth = null, db = null, storage = null;
 if (isFirebaseReady) {

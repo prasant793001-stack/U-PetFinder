@@ -43,3 +43,7 @@ lerna-debug.log*
 
 # ComfyUI source renders (web-optimised copies live in public/media)
 assets/
+
+# U-Ai one-click launchers (local only)
+OPEN-APP.cmd
+FIX-GITHUB-PAGES.cmd

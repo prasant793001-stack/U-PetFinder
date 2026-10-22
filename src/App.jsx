@@ -1,9 +1,7 @@
 import { Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import Landing from './pages/Landing';
-import LostFoundBoard from './pages/LostFoundBoard';
-import AddListing from './pages/AddListing';
-import { isFirebaseReady } from './firebase';
+import { isFirebaseReady } from './firebaseFlag';
 import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -12,6 +10,9 @@ import './App.css';
 import './AppShell.css';
 
 const CatStage = lazy(() => import('./three/CatStage'));
+// Board + Add pages (and the Firebase SDK they need) load only when visited
+const LostFoundBoard = lazy(() => import('./pages/LostFoundBoard'));
+const AddListing = lazy(() => import('./pages/AddListing'));
 const canWebGL = (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; } })();
 const reducedMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
@@ -144,12 +145,14 @@ function App() {
       )}
 
       <main className="shell-main">
+        <Suspense fallback={<div className="page-loading" aria-busy="true" />}>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/board" element={<LostFoundBoard />} />
           <Route path="/add" element={<AddListing />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </main>
 
       {showCoco && (canWebGL && !reducedMotion

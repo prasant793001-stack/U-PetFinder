@@ -9,11 +9,14 @@ export default defineConfig({
     open: true
   },
   build: {
+    // the lazily-loaded 3D cat chunk (three.js) is ~900 kB by nature; everything on the first paint is far smaller
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          three: ['three', '@react-three/fiber', '@react-three/drei']
+          vendor: ['react', 'react-dom', 'react-router-dom']
+          // three.js is NOT forced into a chunk: it ships inside the lazy CatStage chunk, so the first
+          // paint never waits for the 3D engine.
         }
       }
     }
