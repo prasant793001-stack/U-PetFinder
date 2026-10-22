@@ -1,5 +1,5 @@
 .coco-stage { position: fixed; inset: 0; z-index: 40; pointer-events: none; }
-.coco-canvas { position: absolute !important; inset: 0; pointer-events: none; }
+.coco-canvas, .coco-canvas * { pointer-events: none !important; }
 .coco-canvas canvas { pointer-events: none !important; }
 .coco-anchor { position: absolute; left: 0; top: 0; width: 0; height: 0; will-change: transform; }
 .coco-hit3d { position: absolute; left: -48px; top: -40px; width: 96px; height: 110px; border-radius: 50%; border: 0; background: transparent; cursor: grab; pointer-events: auto; }

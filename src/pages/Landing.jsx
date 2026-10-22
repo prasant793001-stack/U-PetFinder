@@ -126,8 +126,11 @@ export default function Landing() {
           </h1>
           <p className="lp-lede lp-fade">A calm, secure place to report, search and reunite - with your home location protected at every step.</p>
           <div className="lp-ctas lp-fade">
-            <Magnetic className="lp-btn lp-btn-primary" onClick={() => navigate('/add')}>Report a pet <span aria-hidden>→</span></Magnetic>
-            <Magnetic className="lp-btn lp-btn-glass" onClick={() => navigate('/board')}>Browse listings</Magnetic>
+            <Magnetic className="lp-btn lp-btn-primary" onClick={() => navigate('/report?type=lost')}>REPORT A LOST PET</Magnetic>
+            <Magnetic className="lp-btn lp-btn-sun" onClick={() => navigate('/report?type=found')}>REPORT A FOUND PET</Magnetic>
+          </div>
+          <div className="lp-ctas lp-fade lp-ctas-2">
+            <button className="lp-link" onClick={() => navigate('/board')}>Browse lost &amp; found pets →</button>
           </div>
         </div>
         <div className="lp-scrollcue lp-fade" aria-hidden><span /></div>
@@ -222,7 +225,8 @@ export default function Landing() {
       <section className="lp-final lp-reveal">
         <h2>Someone is looking for them<br /><em>right now.</em></h2>
         <div className="lp-ctas">
-          <Magnetic className="lp-btn lp-btn-primary" onClick={() => navigate('/add')}>Post a lost or found pet <span aria-hidden>→</span></Magnetic>
+          <Magnetic className="lp-btn lp-btn-primary" onClick={() => navigate('/report?type=lost')}>REPORT A LOST PET</Magnetic>
+          <Magnetic className="lp-btn lp-btn-sun" onClick={() => navigate('/report?type=found')}>REPORT A FOUND PET</Magnetic>
           <a className="lp-btn lp-btn-ghost" href="mailto:prasant.aakriti@gmail.com">prasant.aakriti@gmail.com</a>
         </div>
       </section>

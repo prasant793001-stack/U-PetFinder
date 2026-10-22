@@ -9,7 +9,7 @@ import './catStage.css';
 const LINES = {
   '/': ["Hi, I'm COCO! Move your mouse - I'll follow you.", 'Psst... click me for a purr.', 'I help reunite lost pets across all 7 emirates.'],
   '/board': ['Filter by emirate, breed and colour. Chats stay private!', 'Every listing is a family waiting.'],
-  '/add': ["Post a pet - I strip your photo's GPS so your home stays private.", 'Add as many pets as you need in one go.'],
+  '/report': ["Post a pet - I strip your photo's GPS so your home stays private.", 'Add as many pets as you need in one go.'],
 };
 
 // soft synthesized purr (no audio files): low-frequency rumble with 25 Hz amplitude flutter
@@ -75,10 +75,13 @@ export default function CatStage() {
     <div className="coco-stage" aria-hidden="false">
       <Canvas
         className="coco-canvas"
+        // R3F puts an inline pointer-events:auto on its wrapper div, which covered the whole page and
+        // swallowed every click. The cat layer must be click-through (only the small .coco-hit3d is clickable).
+        style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
         dpr={[1, 1.6]}
         gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
-        camera={{ position: [0, 4.2, 10], fov: 28, near: 0.1, far: 60 }}
-        onCreated={({ camera }) => camera.lookAt(0, 0.35, 0)}
+        camera={{ position: [0, 3.1, 10], fov: 28, near: 0.1, far: 60 }}
+        onCreated={({ camera }) => camera.lookAt(0, 0.45, 0)}
       >
         <hemisphereLight args={['#fff4e2', '#b9875a', 0.75]} />
         <directionalLight position={[3, 6, 5]} intensity={1.9} color="#fff1dc" />

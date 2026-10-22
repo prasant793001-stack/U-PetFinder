@@ -7,7 +7,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { pointer, installPointer, createBrain, think } from './catBrain';
 
-const FUR = '#F09A4A', FUR_DARK = '#C9682A', CREAM = '#FFF1DE', PINK = '#F59BA8', IRIS = '#8FD14F';
+const FUR = '#FFA24C', FUR_DARK = '#E2732B', CREAM = '#FFF6E6', PINK = '#FF9DB2', IRIS = '#7FD35A';
 const TAIL_SEGMENTS = 12;
 const damp = THREE.MathUtils.damp;
 const clamp = THREE.MathUtils.clamp;
@@ -28,7 +28,7 @@ function stripeTexture() {
         const v = (k + 0.5) / 9;
         const wobble = Math.sin(u * 40 + k) * 4;
         const w = 7 + 6 * top;
-        g.fillStyle = `rgba(201,104,42,${0.75 * clamp(top + 0.2, 0, 1)})`;
+        g.fillStyle = `rgba(226,115,43,${0.6 * clamp(top + 0.2, 0, 1)})`;
         g.fillRect(x, v * c.height + wobble - w / 2, 1, w);
       }
     }
@@ -52,24 +52,26 @@ function useMaterials() {
     const shine = new THREE.MeshBasicMaterial({ color: '#ffffff' });
     const mouth = new THREE.MeshStandardMaterial({ color: '#4a1f24', roughness: 0.6 });
     const whisker = new THREE.MeshStandardMaterial({ color: '#fffaf0', roughness: 0.3 });
-    return { fur, furStriped, dark, cream, pink, eyeWhite, iris, pupil, shine, mouth, whisker };
+    const blush = new THREE.MeshBasicMaterial({ color: '#FF7FA0', transparent: true, opacity: 0.55, depthWrite: false });
+    return { fur, furStriped, dark, cream, pink, eyeWhite, iris, pupil, shine, mouth, whisker, blush };
   }, []);
 }
 
 function Eye({ side, m, refs }) {
   const x = side * 0.165;
   return (
-    <group position={[x, 0.07, 0.31]} rotation={[0, side * 0.28, 0]}>
+    <group position={[side * 0.17, 0.085, 0.29]} rotation={[0.05, side * 0.3, 0]}>
       <group ref={(g) => (refs.eyes[side > 0 ? 1 : 0] = g)}>
-        <mesh material={m.eyeWhite} scale={[1, 1.08, 0.62]}><sphereGeometry args={[0.118, 32, 24]} /></mesh>
-        <mesh material={m.iris} position={[0, 0, 0.058]} scale={[1, 1.06, 0.45]}><sphereGeometry args={[0.088, 32, 24]} /></mesh>
-        <mesh ref={(p) => (refs.pupils[side > 0 ? 1 : 0] = p)} material={m.pupil} position={[0, 0, 0.086]} scale={[0.38, 1, 0.3]}><sphereGeometry args={[0.062, 24, 16]} /></mesh>
-        <mesh material={m.shine} position={[-0.03, 0.04, 0.112]}><sphereGeometry args={[0.019, 12, 8]} /></mesh>
-        <mesh material={m.shine} position={[0.025, -0.03, 0.11]}><sphereGeometry args={[0.009, 8, 6]} /></mesh>
+        <mesh material={m.eyeWhite} scale={[1, 1.08, 0.62]}><sphereGeometry args={[0.142, 32, 24]} /></mesh>
+        <mesh material={m.iris} position={[0, -0.005, 0.07]} scale={[1, 1.08, 0.45]}><sphereGeometry args={[0.112, 32, 24]} /></mesh>
+        <mesh ref={(p) => (refs.pupils[side > 0 ? 1 : 0] = p)} material={m.pupil} position={[0, -0.005, 0.104]} scale={[0.7, 1, 0.3]}><sphereGeometry args={[0.078, 24, 16]} /></mesh>
+        <mesh material={m.shine} position={[-0.038, 0.045, 0.135]}><sphereGeometry args={[0.03, 14, 10]} /></mesh>
+        <mesh material={m.shine} position={[0.035, -0.04, 0.132]}><sphereGeometry args={[0.014, 10, 8]} /></mesh>
+        <mesh material={m.shine} position={[0.04, 0.05, 0.13]}><sphereGeometry args={[0.007, 8, 6]} /></mesh>
       </group>
       {/* eyelid: a fur-coloured hemisphere that rotates down over the eyeball */}
       <mesh ref={(l) => (refs.lids[side > 0 ? 1 : 0] = l)} material={m.fur} scale={[1.02, 1.1, 0.7]}>
-        <sphereGeometry args={[0.124, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <sphereGeometry args={[0.148, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
       </mesh>
     </group>
   );
@@ -79,8 +81,8 @@ function Ear({ side, m, refs }) {
   return (
     <group position={[side * 0.24, 0.3, -0.02]} rotation={[0, 0, side * -0.38]}>
       <group ref={(e) => (refs.ears[side > 0 ? 1 : 0] = e)}>
-        <mesh material={m.fur} position={[0, 0.13, 0]} scale={[1, 1, 0.55]}><coneGeometry args={[0.16, 0.3, 20]} /></mesh>
-        <mesh material={m.pink} position={[0, 0.12, 0.055]} scale={[0.66, 0.78, 0.25]}><coneGeometry args={[0.16, 0.3, 20]} /></mesh>
+        <mesh material={m.fur} position={[0, 0.13, 0]} scale={[1, 1, 0.55]}><coneGeometry args={[0.17, 0.26, 24]} /></mesh>
+        <mesh material={m.pink} position={[0, 0.11, 0.055]} scale={[0.62, 0.74, 0.25]}><coneGeometry args={[0.17, 0.26, 24]} /></mesh>
         <mesh material={m.cream} position={[0, 0.25, 0.03]} scale={[0.25, 0.4, 0.2]}><sphereGeometry args={[0.06, 8, 6]} /></mesh>
       </group>
     </group>
@@ -89,10 +91,10 @@ function Ear({ side, m, refs }) {
 
 function Whiskers({ side, m, refs }) {
   return (
-    <group ref={(w) => (refs.whiskers[side > 0 ? 1 : 0] = w)} position={[side * 0.13, -0.1, 0.36]}>
+    <group ref={(w) => (refs.whiskers[side > 0 ? 1 : 0] = w)} position={[side * 0.13, -0.05, 0.36]}>
       {[-0.16, 0, 0.16].map((a, i) => (
-        <mesh key={i} material={m.whisker} rotation={[0, side * 0.25, side * (Math.PI / 2 + a)]} position={[side * 0.2, a * 0.2, 0]}>
-          <cylinderGeometry args={[0.0035, 0.0015, 0.42, 4]} />
+        <mesh key={i} material={m.whisker} rotation={[0, side * 0.25, side * (Math.PI / 2 + a)]} position={[side * 0.16, a * 0.2, 0]}>
+          <cylinderGeometry args={[0.003, 0.0012, 0.3, 4]} />
         </mesh>
       ))}
     </group>
@@ -103,10 +105,11 @@ function Leg({ pos, back, m, legRef, kneeRef }) {
   return (
     <group position={pos} ref={legRef}>
       {back && <mesh material={m.furStriped} position={[0, 0.02, 0]} scale={[0.8, 1.15, 1.1]}><sphereGeometry args={[0.17, 24, 16]} /></mesh>}
-      <mesh material={m.fur} position={[0, -0.13, 0]}><capsuleGeometry args={[0.078, 0.2, 8, 16]} /></mesh>
-      <group position={[0, -0.27, 0]} ref={kneeRef}>
-        <mesh material={m.fur} position={[0, -0.07, 0]}><capsuleGeometry args={[0.07, 0.1, 8, 16]} /></mesh>
-        <mesh material={m.cream} position={[0, -0.16, 0.03]} scale={[1, 0.62, 1.25]}><sphereGeometry args={[0.088, 20, 14]} /></mesh>
+      <mesh material={m.fur} position={[0, -0.1, 0]}><capsuleGeometry args={[0.085, 0.14, 8, 16]} /></mesh>
+      <group position={[0, -0.21, 0]} ref={kneeRef}>
+        <mesh material={m.fur} position={[0, -0.04, 0]}><capsuleGeometry args={[0.078, 0.05, 8, 16]} /></mesh>
+        <mesh material={m.cream} position={[0, -0.11, 0.03]} scale={[1, 0.66, 1.2]}><sphereGeometry args={[0.098, 20, 14]} /></mesh>
+        {[-0.04, 0, 0.04].map((bx, k) => <mesh key={k} material={m.pink} position={[bx, -0.14, 0.13]} scale={[1, 0.8, 0.6]}><sphereGeometry args={[0.018, 8, 6]} /></mesh>)}
       </group>
     </group>
   );
@@ -121,7 +124,7 @@ export default function CocoCat({ onScreen, petSignal, hopSignal, scale = 0.6 })
   const refs = useMemo(() => ({ eyes: [], pupils: [], lids: [], ears: [], whiskers: [] }), []);
   const sim = useMemo(() => ({
     pos: new THREE.Vector3(0.8, 0, 0.8), heading: -0.6, speed: 0, phase: 0, vy: 0, y: 0,
-    pose: { bodyY: 0.57, pitch: 0, roll: 0, frontFold: 0, backFold: 0, headPitch: 0, headYaw: 0, headRoll: 0, lid: 0, tailUp: 0.6, tailCurl: 0, earBack: 0, pupil: 0.38, mouth: 0 },
+    pose: { bodyY: 0.47, pitch: 0, roll: 0, frontFold: 0, backFold: 0, headPitch: 0, headYaw: 0, headRoll: 0, lid: 0, tailUp: 0.6, tailCurl: 0, earBack: 0, pupil: 0.72, mouth: 0 },
     blinkAt: 1.5, blink: 0, twitchAt: 2, twitch: 0, twitchSide: 1,
     saccade: new THREE.Vector2(), saccadeAt: 0.5,
     tailVel: 0, lastHeading: -0.6, petSeen: 0, hopSeen: 0,
@@ -143,7 +146,7 @@ export default function CocoCat({ onScreen, petSignal, hopSignal, scale = 0.6 })
     // visible half-width of the floor near the cat (portrait phones are narrow - keep COCO on screen)
     const halfW = Math.max(0.35, camera.position.z * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (size.width / size.height) - 0.55 * scale - 0.2);
     if (pointer.has) {
-      tmp.ndc.set(pointer.nx, Math.min(pointer.ny, 0.35));
+      tmp.ndc.set(pointer.nx, Math.min(pointer.ny, 0.2));
       ray.setFromCamera(tmp.ndc, camera);
       if (ray.ray.intersectPlane(floor, tmp.v)) sim.target.copy(tmp.v);
     } else {
@@ -186,12 +189,12 @@ export default function CocoCat({ onScreen, petSignal, hopSignal, scale = 0.6 })
     sim.phase += sim.speed * dt * (S === 'run' ? 5.2 : 7.5);
 
     // ---- pose targets per state (blended with damping = smooth transitions) -----------------------
-    const T = { bodyY: 0.57, pitch: 0, roll: 0, frontFold: 0, backFold: 0, headPitch: 0, headRoll: 0, lid: 0, tailUp: 0.7, tailCurl: 0, earBack: 0, pupil: 0.38, mouth: 0 };
-    if (S === 'sit' || S === 'groom' || S === 'purr') Object.assign(T, { bodyY: 0.6, pitch: -0.62, frontFold: 0.62, backFold: -1.55, tailUp: -0.9, tailCurl: 1.1 });
-    if (S === 'loaf') Object.assign(T, { bodyY: 0.3, pitch: 0, frontFold: -1.45, backFold: -1.4, tailUp: -1.2, tailCurl: 1.3, lid: 0.45 });
-    if (S === 'sleep') Object.assign(T, { bodyY: 0.24, pitch: 0.04, roll: 0.28, frontFold: -1.5, backFold: -1.45, headPitch: 0.55, headRoll: 0.35, lid: 1, tailUp: -1.3, tailCurl: 1.9, earBack: 0.3 });
-    if (S === 'stretch') { const k = Math.sin(Math.PI * clamp(since / 2.2, 0, 1)); Object.assign(T, { bodyY: 0.57 - 0.17 * k, pitch: 0.38 * k, frontFold: -0.95 * k, headPitch: -0.3 * k, lid: 0.6 * k, mouth: since > 0.5 && since < 1.4 ? 1 : 0, tailUp: 1.2 }); }
-    if (S === 'crouch') Object.assign(T, { bodyY: 0.38, pitch: 0.12, frontFold: -0.25, backFold: -0.55, headPitch: -0.1, tailUp: -0.2, earBack: 0.55, pupil: 0.95 });
+    const T = { bodyY: 0.47, pitch: 0, roll: 0, frontFold: 0, backFold: 0, headPitch: 0, headRoll: 0, lid: 0, tailUp: 0.7, tailCurl: 0, earBack: 0, pupil: 0.72, mouth: 0 };
+    if (S === 'sit' || S === 'groom' || S === 'purr') Object.assign(T, { bodyY: 0.5, pitch: -0.55, frontFold: 0.62, backFold: -1.55, tailUp: -0.9, tailCurl: 1.1 });
+    if (S === 'loaf') Object.assign(T, { bodyY: 0.27, pitch: 0, frontFold: -1.45, backFold: -1.4, tailUp: -1.2, tailCurl: 1.3, lid: 0.45 });
+    if (S === 'sleep') Object.assign(T, { bodyY: 0.22, pitch: 0.04, roll: 0.28, frontFold: -1.5, backFold: -1.45, headPitch: 0.28, headRoll: 0.4, lid: 1, tailUp: -1.3, tailCurl: 1.9, earBack: 0.3 });
+    if (S === 'stretch') { const k = Math.sin(Math.PI * clamp(since / 2.2, 0, 1)); Object.assign(T, { bodyY: 0.47 - 0.14 * k, pitch: 0.38 * k, frontFold: -0.95 * k, headPitch: -0.3 * k, lid: 0.6 * k, mouth: since > 0.5 && since < 1.4 ? 1 : 0, tailUp: 1.2 }); }
+    if (S === 'crouch') Object.assign(T, { bodyY: 0.33, pitch: 0.12, frontFold: -0.25, backFold: -0.55, headPitch: -0.1, tailUp: -0.2, earBack: 0.55, pupil: 0.95 });
     if (S === 'pounce') Object.assign(T, { pitch: since < 0.35 ? -0.35 : 0.3, frontFold: since < 0.35 ? -1.1 : 0.4, backFold: since < 0.35 ? 0.9 : -0.4, tailUp: 0.4, earBack: 0.4, pupil: 1 });
     if (S === 'hop') Object.assign(T, { tailUp: 1.4, pupil: 0.8, frontFold: sim.y > 0.05 ? -0.5 : 0, backFold: sim.y > 0.05 ? 0.5 : 0 });
     if (S === 'purr') Object.assign(T, { lid: 0.68, tailUp: 1.45, tailCurl: 0, headRoll: 0.18 });
@@ -230,8 +233,8 @@ export default function CocoCat({ onScreen, petSignal, hopSignal, scale = 0.6 })
     let pitch = -Math.atan2(tmp.w.y - 0.25, Math.hypot(tmp.w.x, tmp.w.z));
     const alert = S !== 'sleep' && S !== 'groom' && S !== 'loaf';
     yaw = alert ? clamp(yaw, -1.05, 1.05) : 0;
-    pitch = alert ? clamp(pitch, -0.55, 0.5) : 0;
-    if (S === 'groom') { yaw = -0.35 + Math.sin(t * 7) * 0.08; pitch = 0.55 + Math.sin(t * 7) * 0.12; }
+    pitch = alert ? clamp(pitch - 0.18, -0.55, 0.12) : 0; // face tilts up towards the viewer - cuter
+    if (S === 'groom') { yaw = -0.3 + Math.sin(t * 7) * 0.08; pitch = 0.28 + Math.sin(t * 7) * 0.1; }
     P.headYaw = damp(P.headYaw, yaw, 5, dt);
     sim.lookPitch = damp(sim.lookPitch || 0, pitch, 5, dt);
     // counter-rotate the body pitch so the head stays level while sitting / stretching
@@ -244,7 +247,7 @@ export default function CocoCat({ onScreen, petSignal, hopSignal, scale = 0.6 })
     const eyePitch = clamp(pitch * 0.4 + sim.saccade.y, -0.3, 0.3);
     refs.eyes.forEach((e) => e && e.rotation.set(eyePitch, eyeYaw, 0));
     const dil = P.pupil + (pointer.speed > 0.8 ? 0.2 : 0);
-    refs.pupils.forEach((p) => p && p.scale.set(clamp(dil, 0.3, 1), 1, 0.3));
+    refs.pupils.forEach((p) => p && p.scale.set(clamp(dil, 0.45, 1.05), clamp(0.95 + (dil - 0.72) * 0.2, 0.9, 1.05), 0.3));
 
     // blinks (sometimes a slow "I trust you" blink), plus state-driven lid level
     sim.blinkAt -= dt;
@@ -315,18 +318,19 @@ export default function CocoCat({ onScreen, petSignal, hopSignal, scale = 0.6 })
       <group ref={root} scale={scale}>
         <group ref={bodyPivot}>
           <group ref={body}>
-            <mesh material={m.furStriped} rotation={[Math.PI / 2, 0, 0]} scale={[0.4, 0.66, 0.37]} castShadow><sphereGeometry args={[1, 48, 32]} /></mesh>
-            <mesh material={m.cream} position={[0, -0.07, 0.42]} scale={[0.27, 0.27, 0.22]}><sphereGeometry args={[1, 32, 24]} /></mesh>
+            <mesh material={m.furStriped} rotation={[Math.PI / 2, 0, 0]} scale={[0.43, 0.52, 0.4]} castShadow><sphereGeometry args={[1, 48, 32]} /></mesh>
+            <mesh material={m.cream} position={[0, -0.06, 0.32]} scale={[0.3, 0.3, 0.24]}><sphereGeometry args={[1, 32, 24]} /></mesh>
+            <mesh material={m.cream} position={[0, -0.2, 0.05]} scale={[0.3, 0.16, 0.38]}><sphereGeometry args={[1, 24, 16]} /></mesh>
           </group>
-          {[[-0.17, -0.12, 0.4, false], [0.17, -0.12, 0.4, false], [-0.19, -0.1, -0.4, true], [0.19, -0.1, -0.4, true]].map(([x, y, z, back], i) => (
+          {[[-0.17, -0.12, 0.3, false], [0.17, -0.12, 0.3, false], [-0.2, -0.1, -0.3, true], [0.2, -0.1, -0.3, true]].map(([x, y, z, back], i) => (
             <Leg key={i} pos={[x, y, z]} back={back} m={m} legRef={(r) => (legs.current[i] = r)} kneeRef={(r) => (knees.current[i] = r)} />
           ))}
           {/* tail: nested segments so each one bends relative to the previous */}
-          <group position={[0, 0.12, -0.6]}>
+          <group position={[0, 0.12, -0.48]}>
             {(() => {
               let node = null;
               for (let i = TAIL_SEGMENTS - 1; i >= 0; i--) {
-                const r = 0.072 - i * 0.0026;
+                const r = 0.088 - i * 0.003;
                 const mat = i % 3 === 2 ? m.dark : i === TAIL_SEGMENTS - 1 ? m.dark : m.fur;
                 node = (
                   <group key={i} ref={(g) => (tail.current[i] = g)} position={[0, 0, i === 0 ? 0 : -0.085]}>
@@ -339,8 +343,8 @@ export default function CocoCat({ onScreen, petSignal, hopSignal, scale = 0.6 })
             })()}
           </group>
           {/* head */}
-          <group position={[0, 0.3, 0.6]}>
-            <group ref={head}>
+          <group position={[0, 0.36, 0.5]}>
+            <group ref={head} scale={1.28}>
               <mesh material={m.fur} scale={[1.1, 0.94, 0.95]}><sphereGeometry args={[0.4, 48, 32]} /></mesh>
               {/* forehead "M" stripes */}
               {[-0.09, 0, 0.09].map((x, i) => (
@@ -348,12 +352,13 @@ export default function CocoCat({ onScreen, petSignal, hopSignal, scale = 0.6 })
               ))}
               {[-1, 1].map((s) => <mesh key={s} material={m.dark} position={[s * 0.4, 0.02, 0.05]} rotation={[0, 0, s * 1.2]} scale={[0.4, 1, 0.5]}><capsuleGeometry args={[0.03, 0.12, 4, 8]} /></mesh>)}
               {/* muzzle + cheeks */}
-              <mesh material={m.cream} position={[-0.085, -0.12, 0.3]} scale={[1, 0.82, 0.8]}><sphereGeometry args={[0.13, 24, 16]} /></mesh>
-              <mesh material={m.cream} position={[0.085, -0.12, 0.3]} scale={[1, 0.82, 0.8]}><sphereGeometry args={[0.13, 24, 16]} /></mesh>
-              <mesh material={m.cream} position={[0, -0.2, 0.27]} scale={[1, 0.7, 0.9]}><sphereGeometry args={[0.1, 20, 14]} /></mesh>
-              {[-1, 1].map((s) => <mesh key={s} material={m.pink} position={[s * 0.24, -0.08, 0.3]} scale={[1, 0.6, 0.3]}><sphereGeometry args={[0.055, 16, 10]} /></mesh>)}
-              <mesh material={m.pink} position={[0, -0.05, 0.4]} rotation={[0.3, 0, 0]} scale={[1.25, 0.8, 0.8]}><sphereGeometry args={[0.04, 16, 12]} /></mesh>
-              <mesh ref={jaw} material={m.mouth} position={[0, -0.15, 0.37]} scale={[1, 0.15, 0.6]}><sphereGeometry args={[0.05, 16, 12]} /></mesh>
+              <mesh material={m.cream} position={[-0.08, -0.07, 0.31]} scale={[1, 0.8, 0.8]}><sphereGeometry args={[0.13, 24, 16]} /></mesh>
+              <mesh material={m.cream} position={[0.08, -0.07, 0.31]} scale={[1, 0.8, 0.8]}><sphereGeometry args={[0.13, 24, 16]} /></mesh>
+              <mesh material={m.cream} position={[0, -0.15, 0.28]} scale={[1, 0.7, 0.9]}><sphereGeometry args={[0.1, 20, 14]} /></mesh>
+              {[-1, 1].map((s) => <mesh key={s} material={m.blush} position={[s * 0.25, -0.035, 0.29]} scale={[1, 0.62, 0.3]}><sphereGeometry args={[0.07, 16, 10]} /></mesh>)}
+              {[-1, 1].map((s) => <mesh key={'m' + s} material={m.mouth} position={[s * 0.026, -0.065, 0.41]} rotation={[0.25, 0, Math.PI]}><torusGeometry args={[0.026, 0.0065, 8, 16, Math.PI]} /></mesh>)}
+              <mesh material={m.pink} position={[0, -0.01, 0.41]} rotation={[0.3, 0, 0]} scale={[1.25, 0.8, 0.8]}><sphereGeometry args={[0.04, 16, 12]} /></mesh>
+              <mesh ref={jaw} material={m.mouth} position={[0, -0.1, 0.39]} scale={[1, 0.15, 0.6]}><sphereGeometry args={[0.05, 16, 12]} /></mesh>
               <Eye side={-1} m={m} refs={refs} />
               <Eye side={1} m={m} refs={refs} />
               <Ear side={-1} m={m} refs={refs} />

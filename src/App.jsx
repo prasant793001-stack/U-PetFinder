@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
-import { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense, Component } from 'react';
 import Landing from './pages/Landing';
 import { isFirebaseReady } from './firebaseFlag';
 import Lenis from 'lenis';
@@ -11,16 +11,24 @@ import './AppShell.css';
 
 const CatStage = lazy(() => import('./three/CatStage'));
 // Board + Add pages (and the Firebase SDK they need) load only when visited
-const LostFoundBoard = lazy(() => import('./pages/LostFoundBoard'));
-const AddListing = lazy(() => import('./pages/AddListing'));
+const Board = lazy(() => import('./pages/Board'));
+const ReportPet = lazy(() => import('./pages/ReportPet'));
 const canWebGL = (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; } })();
 const reducedMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 const COCO_LINES = {
   '/': "Hi, I'm COCO! I help reunite lost pets with their families across the UAE.",
   '/board': 'Filter by emirate, animal, breed and colour. Chats stay private - no phone numbers shown!',
-  '/add': "Tap here to post a pet - I'll strip the photo's location data to protect your home privacy!"
+  '/report': "Tap here to post a pet - I'll strip the photo's location data to protect your home privacy!"
 };
+
+// If the 3D chunk fails to download or WebGL crashes, show the lightweight 2D COCO instead of a broken page.
+class Safe extends Component {
+  constructor(p) { super(p); this.state = { failed: false }; }
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(e) { console.warn('[U-PetFinder] 3D COCO disabled:', e?.message); }
+  render() { return this.state.failed ? this.props.fallback : this.props.children; }
+}
 
 function Logo() {
   return (
@@ -133,7 +141,7 @@ function App() {
         <div className="shell-links">
           <NavLink to="/" end className={link}>Home</NavLink>
           <NavLink to="/board" className={link}>Lost &amp; Found</NavLink>
-          <NavLink to="/add" className={link}>Add Pet</NavLink>
+          <NavLink to="/report" className={link}>Report a Pet</NavLink>
         </div>
         <button className="shell-coco-toggle" onClick={() => setShowCoco(s => !s)}>
           {showCoco ? 'Hide COCO' : 'Show COCO'}
@@ -148,15 +156,16 @@ function App() {
         <Suspense fallback={<div className="page-loading" aria-busy="true" />}>
         <Routes>
           <Route path="/" element={<Landing />} />
-          <Route path="/board" element={<LostFoundBoard />} />
-          <Route path="/add" element={<AddListing />} />
+          <Route path="/board" element={<Board />} />
+          <Route path="/report" element={<ReportPet />} />
+          <Route path="/add" element={<Navigate to="/report" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </Suspense>
       </main>
 
       {showCoco && (canWebGL && !reducedMotion
-        ? <Suspense fallback={null}><CatStage /></Suspense>
+        ? <Safe fallback={<Coco message={message} jumping={jumping} look={look} />}><Suspense fallback={null}><CatStage /></Suspense></Safe>
         : <Coco message={message} jumping={jumping} look={look} />)}
 
       <footer className="shell-footer">
