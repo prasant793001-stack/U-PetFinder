@@ -4,7 +4,7 @@
 .lp h1, .lp h2 { font-family: var(--serif); font-weight: 600; letter-spacing: -0.02em; }
 .lp em { font-style: italic; color: var(--amber-deep); }
 .lp-accent .lp-word-in, .lp-accent { color: var(--amber); }
-.lp-word { display: inline-block; margin-right: .26em; overflow: hidden; vertical-align: top; padding-bottom: .08em; margin-bottom: -.08em; }
+.lp-word { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .08em; margin-bottom: -.08em; }
 .lp-word-in { display: inline-block; will-change: transform; }
 .lp-kicker { font-size: .78rem; letter-spacing: .28em; text-transform: uppercase; color: var(--amber-deep); font-weight: 700; margin-bottom: 1rem; }
 

@@ -48,6 +48,7 @@ export default function CatStage() {
 
   const onScreen = (x, y, s) => {
     if (anchor.current) anchor.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    if (anchor.current) anchor.current.dataset.flip = x > window.innerWidth * 0.55 ? '1' : '0'; // keep the bubble on screen
     if (s !== stateRef.current) {
       stateRef.current = s;
       if (fx.current) fx.current.dataset.state = s;

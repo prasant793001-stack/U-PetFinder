@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { Fragment, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -11,7 +11,7 @@ const EMIRATES = ['Abu Dhabi', 'Dubai', 'Sharjah', 'Ajman', 'Umm Al Quwain', 'Ra
 // split text into word spans so GSAP can animate each word
 function Words({ text, className = '' }) {
   return text.split(' ').map((w, i) => (
-    <span key={i} className={`lp-word ${className}`}><span className="lp-word-in">{w}</span></span>
+    <Fragment key={i}><span className={`lp-word ${className}`}><span className="lp-word-in">{w}</span></span>{' '}</Fragment>
   ));
 }
 

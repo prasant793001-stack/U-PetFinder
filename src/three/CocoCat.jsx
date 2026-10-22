@@ -120,7 +120,7 @@ export default function CocoCat({ onScreen, petSignal, hopSignal, scale = 0.6 })
   const legs = useRef([]), knees = useRef([]), tail = useRef([]);
   const refs = useMemo(() => ({ eyes: [], pupils: [], lids: [], ears: [], whiskers: [] }), []);
   const sim = useMemo(() => ({
-    pos: new THREE.Vector3(1.6, 0, 0.6), heading: -0.6, speed: 0, phase: 0, vy: 0, y: 0,
+    pos: new THREE.Vector3(0.8, 0, 0.8), heading: -0.6, speed: 0, phase: 0, vy: 0, y: 0,
     pose: { bodyY: 0.57, pitch: 0, roll: 0, frontFold: 0, backFold: 0, headPitch: 0, headYaw: 0, headRoll: 0, lid: 0, tailUp: 0.6, tailCurl: 0, earBack: 0, pupil: 0.38, mouth: 0 },
     blinkAt: 1.5, blink: 0, twitchAt: 2, twitch: 0, twitchSide: 1,
     saccade: new THREE.Vector2(), saccadeAt: 0.5,
@@ -140,13 +140,14 @@ export default function CocoCat({ onScreen, petSignal, hopSignal, scale = 0.6 })
     const P = sim.pose;
 
     // ---- where is the cursor on the floor? ---------------------------------------------------------
-    const halfW = Math.max(1.5, (camera.position.z) * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (size.width / size.height) - 0.9);
+    // visible half-width of the floor near the cat (portrait phones are narrow - keep COCO on screen)
+    const halfW = Math.max(0.35, camera.position.z * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * (size.width / size.height) - 0.55 * scale - 0.2);
     if (pointer.has) {
       tmp.ndc.set(pointer.nx, Math.min(pointer.ny, 0.35));
       ray.setFromCamera(tmp.ndc, camera);
       if (ray.ray.intersectPlane(floor, tmp.v)) sim.target.copy(tmp.v);
     } else {
-      sim.target.set(Math.sin(t * 0.2) * 2, 0, 0.5); // wander a little before the visitor moves the mouse
+      sim.target.set(Math.sin(t * 0.2) * 2, 0, 0.8); // wander a little before the visitor moves the mouse
     }
     sim.target.x = clamp(sim.target.x, -halfW, halfW);
     sim.target.z = clamp(sim.target.z, -2.6, 2.2);
@@ -181,6 +182,7 @@ export default function CocoCat({ onScreen, petSignal, hopSignal, scale = 0.6 })
       sim.pos.z += Math.cos(sim.heading) * sim.speed * dt;
       sim.y = S === 'hop' ? Math.max(0, Math.sin(Math.PI * clamp(since / 0.7, 0, 1))) * 0.55 : damp(sim.y, 0, 10, dt);
     }
+    sim.pos.x = clamp(sim.pos.x, -halfW, halfW); sim.pos.z = clamp(sim.pos.z, -2.6, 2.2);
     sim.phase += sim.speed * dt * (S === 'run' ? 5.2 : 7.5);
 
     // ---- pose targets per state (blended with damping = smooth transitions) -----------------------

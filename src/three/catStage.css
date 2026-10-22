@@ -18,3 +18,5 @@
 .coco-fx[data-state="sleep"] .coco-z:nth-child(3) { animation-delay: 2s; font-size: 26px; }
 @keyframes coco-z { 0% { opacity: 0; transform: translate(0, 0); } 30% { opacity: .9; } 100% { opacity: 0; transform: translate(40px, -60px); } }
 @media (max-width: 760px) { .coco-bubble3d { max-width: 190px; font-size: .78rem; } }
+
+.coco-anchor[data-flip='1'] .coco-bubble3d { left: auto; right: 24px; border-radius: 18px 18px 4px 18px; transform-origin: bottom right; }
