@@ -46,7 +46,9 @@ export default function CatStage() {
     return () => clearTimeout(t);
   }, [location.pathname]);
 
+  const headAt = useRef({ x: -999, y: -999 });
   const onScreen = (x, y, s) => {
+    headAt.current.x = x; headAt.current.y = y;
     if (anchor.current) anchor.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
     if (anchor.current) anchor.current.dataset.flip = x > window.innerWidth * 0.55 ? '1' : '0'; // keep the bubble on screen
     if (s !== stateRef.current) {
@@ -54,6 +56,16 @@ export default function CatStage() {
       if (fx.current) fx.current.dataset.state = s;
     }
   };
+
+  useEffect(() => {
+    const onDown = (e) => {
+      if (e.target.closest?.('a, button, input, select, textarea, label, [role="button"], [role="tab"], .leaflet-container')) return; // page controls always win
+      const dx = e.clientX - headAt.current.x, dy = e.clientY - (headAt.current.y + 20);
+      if (dx * dx + dy * dy < 55 * 55) pet();
+    };
+    window.addEventListener('pointerdown', onDown);
+    return () => window.removeEventListener('pointerdown', onDown);
+  });
 
   const pet = () => {
     petSignal.current++;
@@ -97,7 +109,7 @@ export default function CatStage() {
         <div className="coco-fx" ref={fx} data-state="sit">
           <span className="coco-z">z</span><span className="coco-z">z</span><span className="coco-z">Z</span>
         </div>
-        <button ref={hit} className="coco-hit3d" onClick={pet} aria-label="Pet COCO the cat" />
+        <span ref={hit} className="coco-hit3d" aria-hidden="true" />
         <div ref={bubble} className={`coco-bubble3d ${showLine ? 'is-on' : ''}`} role="status">{line}</div>
       </div>
     </div>

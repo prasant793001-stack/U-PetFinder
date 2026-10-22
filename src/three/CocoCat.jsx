@@ -152,6 +152,13 @@ export default function CocoCat({ onScreen, petSignal, hopSignal, scale = 0.6 })
     } else {
       sim.target.set(Math.sin(t * 0.2) * 2, 0, 0.8); // wander a little before the visitor moves the mouse
     }
+    // a real cat stops NEXT to you and looks up - it never sits on the thing you are about to click
+    if (brain.state !== 'crouch' && brain.state !== 'pounce') {
+      tmp.w.set(sim.pos.x - sim.target.x, 0, sim.pos.z - sim.target.z);
+      const away = tmp.w.length();
+      if (away > 1e-3) sim.target.addScaledVector(tmp.w.multiplyScalar(1 / away), 1.05);
+      else sim.target.x += 1.05;
+    }
     sim.target.x = clamp(sim.target.x, -halfW, halfW);
     sim.target.z = clamp(sim.target.z, -2.6, 2.2);
     // look target: the cursor itself, roughly at head height in front of the camera
