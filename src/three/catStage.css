@@ -1,0 +1,20 @@
+.coco-stage { position: fixed; inset: 0; z-index: 40; pointer-events: none; }
+.coco-canvas { position: absolute !important; inset: 0; pointer-events: none; }
+.coco-canvas canvas { pointer-events: none !important; }
+.coco-anchor { position: absolute; left: 0; top: 0; width: 0; height: 0; will-change: transform; }
+.coco-hit3d { position: absolute; left: -48px; top: -40px; width: 96px; height: 110px; border-radius: 50%; border: 0; background: transparent; cursor: grab; pointer-events: auto; }
+.coco-hit3d:active { cursor: grabbing; }
+.coco-bubble3d { position: absolute; left: 24px; bottom: 56px; width: max-content; max-width: 250px; padding: .7rem 1rem; border-radius: 18px 18px 18px 4px;
+  background: rgba(255, 252, 246, .92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #2D3748; font-size: .86rem; line-height: 1.4;
+  box-shadow: 0 12px 34px rgba(80, 45, 10, .18); border: 1px solid rgba(255, 159, 28, .25);
+  opacity: 0; transform: translateY(8px) scale(.94); transform-origin: bottom left; transition: opacity .35s, transform .45s cubic-bezier(.2, 1.4, .4, 1); pointer-events: none; }
+.coco-bubble3d.is-on { opacity: 1; transform: none; }
+.coco-fx { position: absolute; left: 0; top: -40px; }
+.coco-heart { position: absolute; color: #ff6b8a; font-size: 18px; text-shadow: 0 2px 8px rgba(255, 107, 138, .5); animation: coco-float var(--d) ease-out forwards; }
+@keyframes coco-float { to { transform: translate(var(--dx), -110px) scale(1.4) rotate(20deg); opacity: 0; } }
+.coco-z { position: absolute; left: 10px; font-weight: 800; color: #8aa0c8; opacity: 0; font-size: 16px; }
+.coco-fx[data-state="sleep"] .coco-z { animation: coco-z 3s ease-in-out infinite; }
+.coco-fx[data-state="sleep"] .coco-z:nth-child(2) { animation-delay: 1s; font-size: 20px; }
+.coco-fx[data-state="sleep"] .coco-z:nth-child(3) { animation-delay: 2s; font-size: 26px; }
+@keyframes coco-z { 0% { opacity: 0; transform: translate(0, 0); } 30% { opacity: .9; } 100% { opacity: 0; transform: translate(40px, -60px); } }
+@media (max-width: 760px) { .coco-bubble3d { max-width: 190px; font-size: .78rem; } }

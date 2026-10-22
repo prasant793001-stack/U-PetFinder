@@ -40,3 +40,6 @@ lerna-debug.log*
 
 # Firebase
 .firebase/
+
+# ComfyUI source renders (web-optimised copies live in public/media)
+assets/

@@ -1,11 +1,19 @@
 import { Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import Landing from './pages/Landing';
 import LostFoundBoard from './pages/LostFoundBoard';
 import AddListing from './pages/AddListing';
 import { isFirebaseReady } from './firebase';
+import Lenis from 'lenis';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+gsap.registerPlugin(ScrollTrigger);
 import './App.css';
 import './AppShell.css';
+
+const CatStage = lazy(() => import('./three/CatStage'));
+const canWebGL = (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; } })();
+const reducedMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 const COCO_LINES = {
   '/': "Hi, I'm COCO! I help reunite lost pets with their families across the UAE.",
@@ -72,6 +80,17 @@ function App() {
   const first = useRef(true);
   const message = COCO_LINES[location.pathname] || COCO_LINES['/'];
 
+  // buttery smooth scrolling, synced with GSAP ScrollTrigger
+  useEffect(() => {
+    if (reducedMotion) return;
+    const lenis = new Lenis({ lerp: 0.09, smoothWheel: true });
+    lenis.on('scroll', ScrollTrigger.update);
+    const tick = (time) => lenis.raf(time * 1000);
+    gsap.ticker.add(tick);
+    gsap.ticker.lagSmoothing(0);
+    return () => { gsap.ticker.remove(tick); lenis.destroy(); };
+  }, []);
+
   useEffect(() => {
     let raf = 0;
     const onMove = (e) => {
@@ -87,7 +106,8 @@ function App() {
 
   useEffect(() => {
     if (first.current) { first.current = false; return; }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0 });
+    setTimeout(() => ScrollTrigger.refresh(), 300);
     setJumping(true);
     const t = setTimeout(() => setJumping(false), 900);
     return () => clearTimeout(t);
@@ -120,7 +140,7 @@ function App() {
       </nav>
 
       {!isFirebaseReady && (
-        <div className="demo-banner">Preview mode - showing sample listings. Connect Firebase to go live.</div>
+        <div className="demo-banner">Preview mode · sample listings</div>
       )}
 
       <main className="shell-main">
@@ -132,7 +152,9 @@ function App() {
         </Routes>
       </main>
 
-      {showCoco && <Coco message={message} jumping={jumping} look={look} />}
+      {showCoco && (canWebGL && !reducedMotion
+        ? <Suspense fallback={null}><CatStage /></Suspense>
+        : <Coco message={message} jumping={jumping} look={look} />)}
 
       <footer className="shell-footer">
         <div>
