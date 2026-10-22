@@ -19,3 +19,6 @@
 @media (max-width: 760px) { .coco-bubble3d { max-width: 190px; font-size: .78rem; } }
 
 .coco-anchor[data-flip='1'] .coco-bubble3d { left: auto; right: 24px; border-radius: 18px 18px 4px 18px; transform-origin: bottom right; }
+
+.coco-stage { transition: opacity .5s; }
+@media (max-width: 700px) { .coco-stage.is-resting { opacity: .5; } } /* small screens: keep the form readable while COCO naps */

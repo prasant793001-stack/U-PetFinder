@@ -7,31 +7,30 @@ import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { pointer, installPointer, createBrain, think } from './catBrain';
 
-const FUR = '#FFA24C', FUR_DARK = '#E2732B', CREAM = '#FFF6E6', PINK = '#FF9DB2', IRIS = '#7FD35A';
+// Persian 'blue' (grey) coat with copper eyes - the classic Persian look
+const FUR = '#A9B1BC', FUR_DARK = '#8C95A2', CREAM = '#DCE1E7', PINK = '#EFA7B6', IRIS = '#E8962E';
 const TAIL_SEGMENTS = 12;
 const damp = THREE.MathUtils.damp;
 const clamp = THREE.MathUtils.clamp;
 
-function stripeTexture() {
+// Long-hair look: thousands of short soft strands painted into a canvas, lighter underneath.
+function furTexture(base = FUR, under = CREAM) {
   const c = document.createElement('canvas');
   c.width = 512; c.height = 256;
   const g = c.getContext('2d');
   for (let x = 0; x < c.width; x++) {
-    const u = x / c.width;
-    const top = Math.cos((u - 0.75) * Math.PI * 2);        // 1 = spine, -1 = belly
-    const belly = clamp((-top - 0.15) * 1.6, 0, 1);
-    const base = new THREE.Color(FUR).lerp(new THREE.Color(CREAM), belly);
-    g.fillStyle = base.getStyle();
+    const top = Math.cos((x / c.width - 0.75) * Math.PI * 2);
+    g.fillStyle = new THREE.Color(base).lerp(new THREE.Color(under), clamp((-top + 0.1) * 0.9, 0, 1)).getStyle();
     g.fillRect(x, 0, 1, c.height);
-    if (top > -0.2) {
-      for (let k = 0; k < 9; k++) {
-        const v = (k + 0.5) / 9;
-        const wobble = Math.sin(u * 40 + k) * 4;
-        const w = 7 + 6 * top;
-        g.fillStyle = `rgba(226,115,43,${0.6 * clamp(top + 0.2, 0, 1)})`;
-        g.fillRect(x, v * c.height + wobble - w / 2, 1, w);
-      }
-    }
+  }
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let i = 0; i < 9000; i++) {
+    const x = rnd() * c.width, y = rnd() * c.height, len = 6 + rnd() * 14, a = -Math.PI / 2 + (rnd() - 0.5) * 0.9;
+    const light = rnd() < 0.55;
+    g.strokeStyle = light ? `rgba(255,255,255,${0.05 + rnd() * 0.12})` : `rgba(40,48,60,${0.04 + rnd() * 0.08})`;
+    g.lineWidth = 0.6 + rnd() * 1.2;
+    g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + Math.cos(a) * len * 0.5 + 2, y + Math.sin(a) * len * 0.5, x + Math.cos(a) * len, y + Math.sin(a) * len); g.stroke();
   }
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
@@ -39,28 +38,66 @@ function stripeTexture() {
   return tex;
 }
 
+// A round Persian-style rug in the site's sunny colours: borders, a centre medallion and small motifs.
+function rugTexture() {
+  const c = document.createElement('canvas'); c.width = c.height = 512;
+  const g = c.getContext('2d'); const C = 256;
+  const ring = (r, color) => { g.beginPath(); g.arc(C, C, r, 0, Math.PI * 2); g.fillStyle = color; g.fill(); };
+  ring(256, '#B4380F'); ring(236, '#FFE3A1'); ring(226, '#C2410C'); ring(196, '#F59E0B'); ring(188, '#9A2F0B'); ring(120, '#FFD166');
+  // zig-zag border
+  g.strokeStyle = '#FFF4D6'; g.lineWidth = 5; g.beginPath();
+  for (let i = 0; i <= 96; i++) { const a = (i / 96) * Math.PI * 2, r = i % 2 ? 203 : 219; g.lineTo(C + Math.cos(a) * r, C + Math.sin(a) * r); }
+  g.stroke();
+  // petals around the medallion
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    g.save(); g.translate(C + Math.cos(a) * 152, C + Math.sin(a) * 152); g.rotate(a);
+    g.fillStyle = i % 2 ? '#FFF4D6' : '#0F766E'; g.beginPath(); g.ellipse(0, 0, 22, 11, 0, 0, Math.PI * 2); g.fill(); g.restore();
+  }
+  // medallion
+  g.fillStyle = '#C2410C'; g.beginPath(); for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; g.lineTo(C + Math.cos(a) * (i % 2 ? 70 : 104), C + Math.sin(a) * (i % 2 ? 70 : 104)); } g.fill();
+  ring(48, '#FFF4D6'); ring(34, '#0F766E'); ring(14, '#FFD166');
+  // woven texture
+  for (let i = 0; i < 6000; i++) { g.fillStyle = `rgba(${Math.random() < 0.5 ? '255,255,255' : '60,20,0'},0.06)`; g.fillRect(Math.random() * 512, Math.random() * 512, 2, 1); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  return t;
+}
+
+// soft cluster of fur puffs (ruff, cheeks, chest) - what makes a Persian look fluffy
+function Fluff({ m, puffs, mat = 'furSoft' }) {
+  return puffs.map(([x, y, z, r, sx = 1, sy = 1, sz = 1], i) => (
+    <mesh key={i} material={m[mat]} position={[x, y, z]} scale={[sx, sy, sz]}><sphereGeometry args={[r, 20, 14]} /></mesh>
+  ));
+}
+const ring = (n, rad, y, z, r, squash = 1) => Array.from({ length: n }, (_, i) => {
+  const a = (i / n) * Math.PI * 2;
+  return [Math.cos(a) * rad, y + Math.sin(a) * rad * squash, z, r];
+});
+
 function useMaterials() {
   return useMemo(() => {
-    const fur = new THREE.MeshPhysicalMaterial({ color: FUR, roughness: 0.62, sheen: 1, sheenColor: new THREE.Color('#ffd2a6'), sheenRoughness: 0.45 });
-    const furStriped = fur.clone(); furStriped.map = stripeTexture(); furStriped.color = new THREE.Color('#ffffff');
-    const dark = new THREE.MeshPhysicalMaterial({ color: FUR_DARK, roughness: 0.7, sheen: 0.6, sheenColor: new THREE.Color('#ffb27a') });
+    const furMap = furTexture();
+    const fur = new THREE.MeshPhysicalMaterial({ color: '#ffffff', map: furMap, roughness: 0.92, sheen: 1, sheenColor: new THREE.Color('#f4f7fb'), sheenRoughness: 0.35 });
+    const furStriped = fur; // Persians are solid-coloured - no tabby stripes
+    const furSoft = new THREE.MeshPhysicalMaterial({ color: '#ffffff', map: furTexture('#B4BCC6', '#E3E7EC'), roughness: 0.95, sheen: 1, sheenColor: new THREE.Color('#ffffff'), sheenRoughness: 0.3 });
+    const dark = new THREE.MeshPhysicalMaterial({ color: '#ffffff', map: furTexture(FUR_DARK, FUR), roughness: 0.92, sheen: 1, sheenColor: new THREE.Color('#e8edf3') });
     const cream = new THREE.MeshPhysicalMaterial({ color: CREAM, roughness: 0.7, sheen: 1, sheenColor: new THREE.Color('#ffffff'), sheenRoughness: 0.5 });
     const pink = new THREE.MeshPhysicalMaterial({ color: PINK, roughness: 0.4, clearcoat: 0.6 });
     const eyeWhite = new THREE.MeshPhysicalMaterial({ color: '#fbfbf6', roughness: 0.15, clearcoat: 1 });
-    const iris = new THREE.MeshPhysicalMaterial({ color: IRIS, roughness: 0.2, emissive: new THREE.Color('#2f6b12'), emissiveIntensity: 0.35, clearcoat: 1 });
+    const iris = new THREE.MeshPhysicalMaterial({ color: IRIS, roughness: 0.2, emissive: new THREE.Color('#7a3b05'), emissiveIntensity: 0.35, clearcoat: 1 });
     const pupil = new THREE.MeshStandardMaterial({ color: '#111318', roughness: 0.1 });
     const shine = new THREE.MeshBasicMaterial({ color: '#ffffff' });
     const mouth = new THREE.MeshStandardMaterial({ color: '#4a1f24', roughness: 0.6 });
     const whisker = new THREE.MeshStandardMaterial({ color: '#fffaf0', roughness: 0.3 });
-    const blush = new THREE.MeshBasicMaterial({ color: '#FF7FA0', transparent: true, opacity: 0.55, depthWrite: false });
-    return { fur, furStriped, dark, cream, pink, eyeWhite, iris, pupil, shine, mouth, whisker, blush };
+    const blush = new THREE.MeshBasicMaterial({ color: '#FF8FB0', transparent: true, opacity: 0.4, depthWrite: false });
+    return { fur, furStriped, furSoft, dark, cream, pink, eyeWhite, iris, pupil, shine, mouth, whisker, blush };
   }, []);
 }
 
 function Eye({ side, m, refs }) {
   const x = side * 0.165;
   return (
-    <group position={[side * 0.17, 0.085, 0.29]} rotation={[0.05, side * 0.3, 0]}>
+    <group position={[side * 0.18, 0.07, 0.27]} rotation={[0.05, side * 0.32, 0]}>
       <group ref={(g) => (refs.eyes[side > 0 ? 1 : 0] = g)}>
         <mesh material={m.eyeWhite} scale={[1, 1.08, 0.62]}><sphereGeometry args={[0.142, 32, 24]} /></mesh>
         <mesh material={m.iris} position={[0, -0.005, 0.07]} scale={[1, 1.08, 0.45]}><sphereGeometry args={[0.112, 32, 24]} /></mesh>
@@ -79,11 +116,12 @@ function Eye({ side, m, refs }) {
 
 function Ear({ side, m, refs }) {
   return (
-    <group position={[side * 0.24, 0.3, -0.02]} rotation={[0, 0, side * -0.38]}>
+    <group position={[side * 0.27, 0.24, -0.02]} rotation={[0, 0, side * -0.62]}>
       <group ref={(e) => (refs.ears[side > 0 ? 1 : 0] = e)}>
-        <mesh material={m.fur} position={[0, 0.13, 0]} scale={[1, 1, 0.55]}><coneGeometry args={[0.17, 0.26, 24]} /></mesh>
-        <mesh material={m.pink} position={[0, 0.11, 0.055]} scale={[0.62, 0.74, 0.25]}><coneGeometry args={[0.17, 0.26, 24]} /></mesh>
-        <mesh material={m.cream} position={[0, 0.25, 0.03]} scale={[0.25, 0.4, 0.2]}><sphereGeometry args={[0.06, 8, 6]} /></mesh>
+        <mesh material={m.fur} position={[0, 0.09, 0]} scale={[1, 1, 0.6]}><coneGeometry args={[0.14, 0.18, 24]} /></mesh>
+        <mesh material={m.fur} position={[0, 0.175, 0]} scale={[1, 0.8, 0.6]}><sphereGeometry args={[0.032, 12, 8]} /></mesh>
+        <mesh material={m.pink} position={[0, 0.08, 0.05]} scale={[0.58, 0.7, 0.25]}><coneGeometry args={[0.14, 0.18, 24]} /></mesh>
+        <mesh material={m.furSoft} position={[0, 0.03, 0.06]} scale={[0.9, 0.5, 0.4]}><sphereGeometry args={[0.07, 10, 8]} /></mesh>
       </group>
     </group>
   );
@@ -91,7 +129,7 @@ function Ear({ side, m, refs }) {
 
 function Whiskers({ side, m, refs }) {
   return (
-    <group ref={(w) => (refs.whiskers[side > 0 ? 1 : 0] = w)} position={[side * 0.13, -0.05, 0.36]}>
+    <group ref={(w) => (refs.whiskers[side > 0 ? 1 : 0] = w)} position={[side * 0.12, -0.06, 0.34]}>
       {[-0.16, 0, 0.16].map((a, i) => (
         <mesh key={i} material={m.whisker} rotation={[0, side * 0.25, side * (Math.PI / 2 + a)]} position={[side * 0.16, a * 0.2, 0]}>
           <cylinderGeometry args={[0.003, 0.0012, 0.3, 4]} />
@@ -105,7 +143,7 @@ function Leg({ pos, back, m, legRef, kneeRef }) {
   return (
     <group position={pos} ref={legRef}>
       {back && <mesh material={m.furStriped} position={[0, 0.02, 0]} scale={[0.8, 1.15, 1.1]}><sphereGeometry args={[0.17, 24, 16]} /></mesh>}
-      <mesh material={m.fur} position={[0, -0.1, 0]}><capsuleGeometry args={[0.085, 0.14, 8, 16]} /></mesh>
+      <mesh material={m.fur} position={[0, -0.1, 0]}><capsuleGeometry args={[0.1, 0.12, 8, 16]} /></mesh>
       <group position={[0, -0.21, 0]} ref={kneeRef}>
         <mesh material={m.fur} position={[0, -0.04, 0]}><capsuleGeometry args={[0.078, 0.05, 8, 16]} /></mesh>
         <mesh material={m.cream} position={[0, -0.11, 0.03]} scale={[1, 0.66, 1.2]}><sphereGeometry args={[0.098, 20, 14]} /></mesh>
@@ -115,14 +153,16 @@ function Leg({ pos, back, m, legRef, kneeRef }) {
   );
 }
 
-export default function CocoCat({ onScreen, petSignal, hopSignal, scale = 0.6 }) {
+export default function CocoCat({ onScreen, petSignal, hopSignal, restSignal, scale = 0.6 }) {
   const m = useMaterials();
   const { camera, size } = useThree();
   const brain = useMemo(createBrain, []);
+  const rug = useRef();
   const root = useRef(), bodyPivot = useRef(), body = useRef(), head = useRef(), jaw = useRef(), shadow = useRef();
   const legs = useRef([]), knees = useRef([]), tail = useRef([]);
   const refs = useMemo(() => ({ eyes: [], pupils: [], lids: [], ears: [], whiskers: [] }), []);
   const sim = useMemo(() => ({
+    rug: new THREE.Vector3(2.5, 0, 1.5), rugInit: false,
     pos: new THREE.Vector3(0.8, 0, 0.8), heading: -0.6, speed: 0, phase: 0, vy: 0, y: 0,
     pose: { bodyY: 0.47, pitch: 0, roll: 0, frontFold: 0, backFold: 0, headPitch: 0, headYaw: 0, headRoll: 0, lid: 0, tailUp: 0.6, tailCurl: 0, earBack: 0, pupil: 0.72, mouth: 0 },
     blinkAt: 1.5, blink: 0, twitchAt: 2, twitch: 0, twitchSide: 1,
@@ -137,7 +177,7 @@ export default function CocoCat({ onScreen, petSignal, hopSignal, scale = 0.6 })
   useEffect(() => { installPointer(); }, []);
 
   useFrame((state, rawDt) => {
-    const dt = Math.min(rawDt, 0.05);
+    const dt = Math.min(rawDt, 0.1); // slow phones still get correct timing (a long frame never skips more than 0.1 s)
     const now = performance.now();
     const t = state.clock.elapsedTime;
     const P = sim.pose;
@@ -152,15 +192,26 @@ export default function CocoCat({ onScreen, petSignal, hopSignal, scale = 0.6 })
     } else {
       sim.target.set(Math.sin(t * 0.2) * 2, 0, 0.8); // wander a little before the visitor moves the mouse
     }
+    // COCO's carpet: a fixed spot in the bottom corner of the screen (recomputed so it fits every screen size)
+    tmp.ndc.set(size.width < 700 ? 0.5 : 0.74, size.width < 700 ? -0.78 : -0.7);
+    ray.setFromCamera(tmp.ndc, camera);
+    if (ray.ray.intersectPlane(floor, tmp.v)) {
+      // keep the carpet inside the area COCO can walk to, otherwise it can never reach it
+      tmp.v.x = clamp(tmp.v.x, -halfW + 0.2, halfW - 0.2); tmp.v.z = clamp(tmp.v.z, -2.4, 3.2);
+      sim.rug.lerp(tmp.v, sim.rugInit ? Math.min(1, dt * 4) : 1); sim.rugInit = true;
+    }
+    rug.current.position.set(sim.rug.x, 0.004, sim.rug.z);
+    const resting = !!restSignal?.current;
+    if (resting) sim.target.copy(sim.rug);
     // a real cat stops NEXT to you and looks up - it never sits on the thing you are about to click
-    if (brain.state !== 'crouch' && brain.state !== 'pounce') {
+    else if (brain.state !== 'crouch' && brain.state !== 'pounce') {
       tmp.w.set(sim.pos.x - sim.target.x, 0, sim.pos.z - sim.target.z);
       const away = tmp.w.length();
       if (away > 1e-3) sim.target.addScaledVector(tmp.w.multiplyScalar(1 / away), 1.05);
       else sim.target.x += 1.05;
     }
     sim.target.x = clamp(sim.target.x, -halfW, halfW);
-    sim.target.z = clamp(sim.target.z, -2.6, 2.2);
+    sim.target.z = clamp(sim.target.z, -2.6, 3.4);
     // look target: the cursor itself, roughly at head height in front of the camera
     tmp.ndc.set(pointer.nx, pointer.ny);
     ray.setFromCamera(tmp.ndc, camera);
@@ -171,15 +222,16 @@ export default function CocoCat({ onScreen, petSignal, hopSignal, scale = 0.6 })
     const petted = petSignal.current !== sim.petSeen; sim.petSeen = petSignal.current;
     const wantHop = hopSignal.current !== sim.hopSeen; sim.hopSeen = hopSignal.current;
     const prev = brain.state;
-    think(brain, { dist, now, dt, wantHop, petted });
+    think(brain, { dist, now, dt, wantHop, petted, resting });
     const S = brain.state, since = brain.since;
     if (S === 'pounce' && prev !== 'pounce') { sim.pounceFrom = sim.pos.clone(); sim.pounceTo = sim.target.clone(); }
 
     // ---- locomotion ------------------------------------------------------------------------------
     const moving = S === 'walk' || S === 'run';
-    const desired = Math.atan2(dx, dz);
+    const onRug = resting && dist < 0.3;
+    const desired = onRug ? -0.35 : Math.atan2(dx, dz);
     let diff = Math.atan2(Math.sin(desired - sim.heading), Math.cos(desired - sim.heading));
-    if (moving || S === 'crouch' || S === 'idle') sim.heading += clamp(diff, -1, 1) * Math.min(1, dt * (S === 'run' ? 6 : 4));
+    if (moving || S === 'crouch' || S === 'idle' || (onRug && S !== 'sleep')) sim.heading += clamp(diff, -1, 1) * Math.min(1, dt * (S === 'run' ? 6 : 4));
     const targetSpeed = moving ? (S === 'run' ? 2.7 : 1.15) * (Math.abs(diff) < 1.1 ? 1 : 0.25) * clamp(dist / 1.2, 0.35, 1) : 0;
     sim.speed = damp(sim.speed, targetSpeed, 6, dt);
     if (S === 'pounce' && sim.pounceFrom) {
@@ -192,7 +244,7 @@ export default function CocoCat({ onScreen, petSignal, hopSignal, scale = 0.6 })
       sim.pos.z += Math.cos(sim.heading) * sim.speed * dt;
       sim.y = S === 'hop' ? Math.max(0, Math.sin(Math.PI * clamp(since / 0.7, 0, 1))) * 0.55 : damp(sim.y, 0, 10, dt);
     }
-    sim.pos.x = clamp(sim.pos.x, -halfW, halfW); sim.pos.z = clamp(sim.pos.z, -2.6, 2.2);
+    sim.pos.x = clamp(sim.pos.x, -halfW, halfW); sim.pos.z = clamp(sim.pos.z, -2.6, 3.4);
     sim.phase += sim.speed * dt * (S === 'run' ? 5.2 : 7.5);
 
     // ---- pose targets per state (blended with damping = smooth transitions) -----------------------
@@ -308,6 +360,7 @@ export default function CocoCat({ onScreen, petSignal, hopSignal, scale = 0.6 })
     }
   });
 
+  const rugTex = useMemo(rugTexture, []);
   const shadowTex = useMemo(() => {
     const c = document.createElement('canvas'); c.width = c.height = 128;
     const g = c.getContext('2d'); const gr = g.createRadialGradient(64, 64, 4, 64, 64, 62);
@@ -318,6 +371,15 @@ export default function CocoCat({ onScreen, petSignal, hopSignal, scale = 0.6 })
 
   return (
     <>
+      {/* COCO's Persian carpet */}
+      <group ref={rug} scale={scale * 1.05}>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} scale={[1.02, 0.7, 1]} position={[0, -0.002, 0.012]}><circleGeometry args={[1, 64]} /><meshBasicMaterial color="#7A2E0E" transparent opacity={0.35} depthWrite={false} /></mesh>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} scale={[1, 0.68, 1]} receiveShadow><circleGeometry args={[1, 64]} /><meshStandardMaterial map={rugTex} roughness={0.95} /></mesh>
+        {Array.from({ length: 26 }, (_, i) => {
+          const a = (i / 26) * Math.PI * 2;
+          return <mesh key={i} position={[Math.cos(a) * 1.04, 0.004, Math.sin(a) * 0.72]} rotation={[-Math.PI / 2, 0, -a]}><planeGeometry args={[0.1, 0.025]} /><meshStandardMaterial color="#FFF4D6" /></mesh>;
+        })}
+      </group>
       <mesh ref={shadow} rotation={[-Math.PI / 2, 0, 0]} renderOrder={-1}>
         <planeGeometry args={[1, 1]} />
         <meshBasicMaterial map={shadowTex} transparent depthWrite={false} opacity={0.3} />
@@ -325,7 +387,11 @@ export default function CocoCat({ onScreen, petSignal, hopSignal, scale = 0.6 })
       <group ref={root} scale={scale}>
         <group ref={bodyPivot}>
           <group ref={body}>
-            <mesh material={m.furStriped} rotation={[Math.PI / 2, 0, 0]} scale={[0.43, 0.52, 0.4]} castShadow><sphereGeometry args={[1, 48, 32]} /></mesh>
+            <mesh material={m.furStriped} rotation={[Math.PI / 2, 0, 0]} scale={[0.47, 0.54, 0.44]} castShadow><sphereGeometry args={[1, 48, 32]} /></mesh>
+            {/* long-hair puffs along the back and flanks */}
+            <Fluff m={m} puffs={[[0, 0.27, 0.05, 0.22, 1.6, 0.6, 2.0], [-0.3, 0.02, 0, 0.16, 0.7, 1.2, 2.4], [0.3, 0.02, 0, 0.16, 0.7, 1.2, 2.4], [0, 0.08, -0.42, 0.2, 1.5, 1.1, 0.7]]} />
+            {/* the Persian mane / chest ruff */}
+            <Fluff m={m} puffs={[[0, 0.02, 0.38, 0.2, 1.5, 1.3, 0.8], [0, -0.14, 0.34, 0.16, 1.5, 1, 0.9]]} />
             <mesh material={m.cream} position={[0, -0.06, 0.32]} scale={[0.3, 0.3, 0.24]}><sphereGeometry args={[1, 32, 24]} /></mesh>
             <mesh material={m.cream} position={[0, -0.2, 0.05]} scale={[0.3, 0.16, 0.38]}><sphereGeometry args={[1, 24, 16]} /></mesh>
           </group>
@@ -337,11 +403,11 @@ export default function CocoCat({ onScreen, petSignal, hopSignal, scale = 0.6 })
             {(() => {
               let node = null;
               for (let i = TAIL_SEGMENTS - 1; i >= 0; i--) {
-                const r = 0.088 - i * 0.003;
-                const mat = i % 3 === 2 ? m.dark : i === TAIL_SEGMENTS - 1 ? m.dark : m.fur;
+                const r = 0.13 - i * 0.002; // bushy Persian plume
+                const mat = i % 2 ? m.furSoft : m.fur;
                 node = (
                   <group key={i} ref={(g) => (tail.current[i] = g)} position={[0, 0, i === 0 ? 0 : -0.085]}>
-                    <mesh material={mat} position={[0, 0, -0.04]} scale={[1, 1, 1.35]}><sphereGeometry args={[r, 16, 12]} /></mesh>
+                    <mesh material={mat} position={[0, 0, -0.04]} scale={[1.1, 1, 1.35]}><sphereGeometry args={[r, 16, 12]} /></mesh>
                     {node}
                   </group>
                 );
@@ -352,20 +418,17 @@ export default function CocoCat({ onScreen, petSignal, hopSignal, scale = 0.6 })
           {/* head */}
           <group position={[0, 0.36, 0.5]}>
             <group ref={head} scale={1.28}>
-              <mesh material={m.fur} scale={[1.1, 0.94, 0.95]}><sphereGeometry args={[0.4, 48, 32]} /></mesh>
-              {/* forehead "M" stripes */}
-              {[-0.09, 0, 0.09].map((x, i) => (
-                <mesh key={i} material={m.dark} position={[x, 0.27, 0.23]} rotation={[-0.75, 0, x * 2]} scale={[0.22, 1, 0.5]}><capsuleGeometry args={[0.025, 0.12, 4, 8]} /></mesh>
-              ))}
-              {[-1, 1].map((s) => <mesh key={s} material={m.dark} position={[s * 0.4, 0.02, 0.05]} rotation={[0, 0, s * 1.2]} scale={[0.4, 1, 0.5]}><capsuleGeometry args={[0.03, 0.12, 4, 8]} /></mesh>)}
+              <mesh material={m.fur} scale={[1.2, 0.98, 0.9]}><sphereGeometry args={[0.4, 48, 32]} /></mesh>
+              {/* big fluffy cheeks + collar that frame the face */}
+              <Fluff m={m} puffs={[[-0.37, -0.12, 0.03, 0.13, 0.8, 1.15, 1.1], [0.37, -0.12, 0.03, 0.13, 0.8, 1.15, 1.1], [0, -0.3, 0.06, 0.16, 2.0, 0.75, 1.1]]} />
               {/* muzzle + cheeks */}
-              <mesh material={m.cream} position={[-0.08, -0.07, 0.31]} scale={[1, 0.8, 0.8]}><sphereGeometry args={[0.13, 24, 16]} /></mesh>
-              <mesh material={m.cream} position={[0.08, -0.07, 0.31]} scale={[1, 0.8, 0.8]}><sphereGeometry args={[0.13, 24, 16]} /></mesh>
-              <mesh material={m.cream} position={[0, -0.15, 0.28]} scale={[1, 0.7, 0.9]}><sphereGeometry args={[0.1, 20, 14]} /></mesh>
-              {[-1, 1].map((s) => <mesh key={s} material={m.blush} position={[s * 0.25, -0.035, 0.29]} scale={[1, 0.62, 0.3]}><sphereGeometry args={[0.07, 16, 10]} /></mesh>)}
-              {[-1, 1].map((s) => <mesh key={'m' + s} material={m.mouth} position={[s * 0.026, -0.065, 0.41]} rotation={[0.25, 0, Math.PI]}><torusGeometry args={[0.026, 0.0065, 8, 16, Math.PI]} /></mesh>)}
-              <mesh material={m.pink} position={[0, -0.01, 0.41]} rotation={[0.3, 0, 0]} scale={[1.25, 0.8, 0.8]}><sphereGeometry args={[0.04, 16, 12]} /></mesh>
-              <mesh ref={jaw} material={m.mouth} position={[0, -0.1, 0.39]} scale={[1, 0.15, 0.6]}><sphereGeometry args={[0.05, 16, 12]} /></mesh>
+              <mesh material={m.furSoft} position={[-0.075, -0.08, 0.3]} scale={[1, 0.8, 0.62]}><sphereGeometry args={[0.12, 24, 16]} /></mesh>
+              <mesh material={m.furSoft} position={[0.075, -0.08, 0.3]} scale={[1, 0.8, 0.62]}><sphereGeometry args={[0.12, 24, 16]} /></mesh>
+              <mesh material={m.furSoft} position={[0, -0.15, 0.28]} scale={[1, 0.62, 0.7]}><sphereGeometry args={[0.09, 20, 14]} /></mesh>
+              {[-1, 1].map((s) => <mesh key={s} material={m.blush} position={[s * 0.24, -0.04, 0.3]} scale={[1, 0.62, 0.3]}><sphereGeometry args={[0.07, 16, 10]} /></mesh>)}
+              {[-1, 1].map((s) => <mesh key={'m' + s} material={m.mouth} position={[s * 0.024, -0.055, 0.385]} rotation={[0.25, 0, Math.PI]}><torusGeometry args={[0.026, 0.0065, 8, 16, Math.PI]} /></mesh>)}
+              <mesh material={m.pink} position={[0, 0.0, 0.385]} rotation={[0.3, 0, 0]} scale={[1.35, 0.75, 0.7]}><sphereGeometry args={[0.034, 16, 12]} /></mesh>
+              <mesh ref={jaw} material={m.mouth} position={[0, -0.095, 0.37]} scale={[1, 0.15, 0.6]}><sphereGeometry args={[0.05, 16, 12]} /></mesh>
               <Eye side={-1} m={m} refs={refs} />
               <Eye side={1} m={m} refs={refs} />
               <Ear side={-1} m={m} refs={refs} />

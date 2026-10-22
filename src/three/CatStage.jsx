@@ -7,7 +7,7 @@ import CocoCat from './CocoCat';
 import './catStage.css';
 
 const LINES = {
-  '/': ["Hi, I'm COCO! Move your mouse - I'll follow you.", 'Psst... click me for a purr.', 'I help reunite lost pets across all 7 emirates.'],
+  '/': ["Hi, I'm COCO! Move your mouse - I'll follow you.", 'Psst... click me for a purr.', "I'm a Persian - I help reunite lost pets across all 7 emirates."],
   '/board': ['Filter by emirate, breed and colour. Chats stay private!', 'Every listing is a family waiting.'],
   '/report': ["Post a pet - I strip your photo's GPS so your home stays private.", 'Add as many pets as you need in one go.'],
 };
@@ -32,7 +32,8 @@ function purr() {
 
 export default function CatStage() {
   const location = useLocation();
-  const petSignal = useRef(0), hopSignal = useRef(0);
+  const petSignal = useRef(0), hopSignal = useRef(0), restSignal = useRef(false);
+  const [resting, setResting] = useState(false);
   const anchor = useRef(), bubble = useRef(), hit = useRef(), fx = useRef();
   const stateRef = useRef('sit');
   const [line, setLine] = useState(LINES['/'][0]);
@@ -45,6 +46,32 @@ export default function CatStage() {
     const t = setTimeout(() => setShowLine(false), 7000);
     return () => clearTimeout(t);
   }, [location.pathname]);
+
+  // COCO goes to its carpet while the visitor fills in details: on the report form, when any field has
+  // focus, or while the pointer is over a form panel / pet details. It comes back when they leave.
+  useEffect(() => {
+    let overForm = false, focused = false;
+    const FORM = '.panel, .sheet, .filters, .consent-sheet, form, input, textarea, select';
+    const update = () => {
+      const r = location.pathname === '/report' || overForm || focused;
+      if (r !== restSignal.current) { restSignal.current = r; setResting(r); }
+    };
+    const onOver = (e) => { overForm = !!e.target.closest?.(FORM); update(); };
+    const onFocus = (e) => { focused = !!e.target.closest?.('input, textarea, select'); update(); };
+    const onBlur = () => { setTimeout(() => { focused = !!document.activeElement?.closest?.('input, textarea, select'); update(); }, 0); };
+    window.addEventListener('pointerover', onOver, { passive: true });
+    window.addEventListener('focusin', onFocus);
+    window.addEventListener('focusout', onBlur);
+    update();
+    return () => { window.removeEventListener('pointerover', onOver); window.removeEventListener('focusin', onFocus); window.removeEventListener('focusout', onBlur); };
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!resting) return;
+    setLine("I'll wait on my carpet while you fill this in 💛"); setShowLine(true);
+    const t = setTimeout(() => setShowLine(false), 5000);
+    return () => clearTimeout(t);
+  }, [resting]);
 
   const headAt = useRef({ x: -999, y: -999 });
   const onScreen = (x, y, s) => {
@@ -84,13 +111,13 @@ export default function CatStage() {
   };
 
   return (
-    <div className="coco-stage" aria-hidden="false">
+    <div className={`coco-stage ${resting ? "is-resting" : ""}`} aria-hidden="false">
       <Canvas
         className="coco-canvas"
         // R3F puts an inline pointer-events:auto on its wrapper div, which covered the whole page and
         // swallowed every click. The cat layer must be click-through (only the small .coco-hit3d is clickable).
         style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
-        dpr={[1, 1.6]}
+        dpr={[1, 1.25]}
         gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
         camera={{ position: [0, 3.1, 10], fov: 28, near: 0.1, far: 60 }}
         onCreated={({ camera }) => camera.lookAt(0, 0.45, 0)}
@@ -103,7 +130,7 @@ export default function CatStage() {
           <Lightformer intensity={1.2} position={[-5, 1, 0]} rotation-y={Math.PI / 2} scale={[4, 2, 1]} color="#ffd6a0" />
           <Lightformer intensity={0.8} position={[5, 1, -2]} rotation-y={-Math.PI / 2} scale={[4, 2, 1]} color="#bfe3ff" />
         </Environment>
-        <CocoCat onScreen={onScreen} petSignal={petSignal} hopSignal={hopSignal} scale={window.innerWidth < 700 ? 0.4 : window.innerWidth < 1100 ? 0.5 : 0.6} />
+        <CocoCat onScreen={onScreen} petSignal={petSignal} hopSignal={hopSignal} restSignal={restSignal} scale={window.innerWidth < 700 ? 0.4 : window.innerWidth < 1100 ? 0.5 : 0.6} />
       </Canvas>
       <div className="coco-anchor" ref={anchor}>
         <div className="coco-fx" ref={fx} data-state="sit">

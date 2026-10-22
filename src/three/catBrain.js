@@ -38,7 +38,7 @@ export function createBrain() {
 }
 
 // decide the next state. dist = distance to the target on the floor, inside = target is reachable
-export function think(brain, { dist, now, dt, wantHop, petted }) {
+export function think(brain, { dist, now, dt, wantHop, petted, resting = false }) {
   brain.since += dt;
   brain.t += dt;
   const idleFor = (now - pointer.lastMove) / 1000;
@@ -51,12 +51,28 @@ export function think(brain, { dist, now, dt, wantHop, petted }) {
   if (s === 'hop' && brain.since < 0.9) return;
   if (s === 'purr' && brain.since < 2.6) return;
   if (s === 'pounce' && brain.since < 0.75) return;
+  // one-shot actions always hand over to a calm state (before this, a hop or purr that ended close to the
+  // target matched no rule and COCO stayed stuck in it)
+  if (s === 'hop' || s === 'pounce') { brain.set('idle'); return; }
+  if (s === 'purr') { brain.set('sit'); return; }
   if (s === 'stretch' && brain.since < 2.2) return;
   if (s === 'stretch') { brain.set('sit'); return; }
 
   // sleepy cat: no pointer for a while -> lie down; any movement -> wake up with a stretch
   if (s === 'sleep') { if (idleFor < 0.3) brain.set('stretch'); return; }
   if (idleFor > 22 && (s === 'sit' || s === 'loaf' || s === 'idle' || s === 'groom')) { brain.set('sleep'); return; }
+
+  // RESTING: the visitor is filling in a form -> walk to the carpet, then sit / loaf / groom / nap there quietly
+  if (resting) {
+    if (s === 'crouch' || s === 'pounce') { brain.set('walk'); return; }
+    if (dist > 0.9) { brain.set('run'); return; }   // hurry out of the way of the form
+    if (dist > 0.22) { brain.set('walk'); return; }
+    if (s === 'walk' || s === 'run') { brain.set('sit'); brain.nextIdleAct = 3 + Math.random() * 3; return; }
+    if (s === 'sit' && brain.since > brain.nextIdleAct) { brain.set(Math.random() < 0.5 ? 'loaf' : 'groom'); brain.nextIdleAct = 6 + Math.random() * 6; return; }
+    if ((s === 'groom' && brain.since > 3.4) || (s === 'loaf' && brain.since > 12)) brain.set('sit');
+    if (idleFor > 30 && s !== 'sleep') brain.set('sleep');
+    return;
+  }
 
   // hunting: a fast-moving pointer close by is prey
   if (s === 'crouch') {
